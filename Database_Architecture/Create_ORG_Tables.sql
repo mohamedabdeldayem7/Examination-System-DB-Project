@@ -1,8 +1,23 @@
 USE [ExamSystemDB];
 GO
 
+-- Drop tables first
+DROP TABLE IF EXISTS Org.Intake_Track;
+GO
 
--- Org.Branch    
+DROP TABLE IF EXISTS Org.Intake;
+GO
+
+DROP TABLE IF EXISTS Org.Track;
+GO
+
+DROP TABLE IF EXISTS Org.Department;
+GO
+
+DROP TABLE IF EXISTS Org.Branch;
+GO
+
+-- Org.Branch 
 CREATE TABLE Org.Branch (
     BranchId INT IDENTITY(1,1) PRIMARY KEY,
     BranchName NVARCHAR(100) NOT NULL,
