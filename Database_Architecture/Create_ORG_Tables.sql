@@ -1,8 +1,8 @@
 USE [ExamSystemDB];
 GO
 
--- Org.Branch
-    
+
+-- Org.Branch    
 CREATE TABLE Org.Branch (
     BranchId INT IDENTITY(1,1) PRIMARY KEY,
     BranchName NVARCHAR(100) NOT NULL,
@@ -28,8 +28,8 @@ CREATE TABLE Org.Track (
 ) ON FG_Lookup;
 GO
 
--- Org.Intake
 
+-- Org.Intake
 CREATE TABLE Org.Intake (
     IntakeId INT IDENTITY(1,1) PRIMARY KEY,
     IntakeYear INT NOT NULL,
