@@ -9,18 +9,24 @@ DROP TABLE IF EXISTS Users.Account;
 GO
 
 -- Users.Account
-CREATE TABLE Users.Account (
-    AccountId INT IDENTITY(1,1) PRIMARY KEY,
-    Username NVARCHAR(50) NOT NULL UNIQUE,
-    Email NVARCHAR(50) NULL UNIQUE,
-    Password VARBINARY(20) NOT NULL,
-    Role NVARCHAR(20) NOT NULL,           -- Admin, Instructor, Student, Manager
-    IsActive BIT NOT NULL DEFAULT 1,
-    LastLoginTime DATETIME NULL,
-    CreatedAt DATETIME NOT NULL DEFAULT GETDATE()
-) ON FG_MasterData;
+USE [ExamSystemDB];
 GO
 
+IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE object_id = OBJECT_ID(N'Users.Account') AND type = 'U')
+BEGIN
+    CREATE TABLE Users.Account (
+        AccountId INT IDENTITY(1,1) PRIMARY KEY,
+        Username NVARCHAR(50) NOT NULL UNIQUE,
+        Email NVARCHAR(256) NULL UNIQUE,
+        Password NVARCHAR(256) NOT NULL,
+        Role NVARCHAR(20) NOT NULL,
+        IsActive BIT NOT NULL DEFAULT 1,
+        LastLoginTime DATETIME2 NULL,
+        CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+        CONSTRAINT CHK_Account_Role CHECK (Role IN ('Admin','Instructor','Student','Manager'))
+    ) ON FG_MasterData;
+END
+GO
 
 -- Users.Person
 CREATE TABLE Users.Person (
