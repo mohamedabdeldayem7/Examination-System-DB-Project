@@ -1,0 +1,1 @@
+all Security Configurations are written in this folder 👌
