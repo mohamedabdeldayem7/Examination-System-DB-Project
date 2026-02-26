@@ -40,3 +40,27 @@ CREATE TABLE Users.Person (
     CONSTRAINT FK_Person_Account FOREIGN KEY (AccountId) REFERENCES Users.Account(AccountId) ON DELETE CASCADE
 ) ON FG_MasterData;
 GO
+
+--Users.Student 
+CREATE TABLE Users.Student 
+( 
+    StudentID INT PRIMARY KEY ,
+    TrackID INT NULL,
+    IntakeID INT NULL,
+    BranchID INT NULL,
+    CONSTRAINT FK_Student_Person FOREIGN KEY (StudentID) REFERENCES Users.Person(PersonId) ON DELETE CASCADE,
+    CONSTRAINT FK_Student_Track FOREIGN KEY (TrackID) REFERENCES Org.Track(TrackId) ON DELETE SET NULL ,
+    CONSTRAINT FK_Student_Intake FOREIGN KEY (IntakeID) REFERENCES Org.Intake(IntakeId) ON DELETE SET NULL,
+    CONSTRAINT FK_Student_Branch FOREIGN KEY (BranchID) REFERENCES Org.Branch(BranchId) ON DELETE SET NULL
+
+) ON FG_MasterData;
+
+--Users.Instructor 
+CREATE TABLE Users.Instructor 
+( 
+    InstructorID INT PRIMARY KEY ,
+    Salary DECIMAL(10,2) NOT NULL ,
+    HireDate DATE DEFAULT GETDATE(),
+    Office varchar(50) ,
+    Is_Manager BIT DEFAULT 0 
+) ON FG_MasterData;
