@@ -57,6 +57,7 @@ GO
 CREATE TABLE Org.Intake_Track (
     IntakeId    INT NOT NULL,
     TrackId     INT NOT NULL,
+    IsDeleted BIT NOT NULL DEFAULT 0,
     CONSTRAINT PK_Intake_Track PRIMARY KEY (IntakeId, TrackId),
     CONSTRAINT FK_IntakeTrack_Intake FOREIGN KEY (IntakeId) REFERENCES Org.Intake(IntakeId) ON DELETE CASCADE,
     CONSTRAINT FK_IntakeTrack_Track FOREIGN KEY (TrackId) REFERENCES Org.Track(TrackId) ON DELETE CASCADE
