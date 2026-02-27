@@ -1,40 +1,7 @@
 use ExamSystemDB;
 
 -------------------------------------------------------
--- TABLES — ACADEMIC SCHEMA (FG_MasterData)
--------------------------------------------------------
-
-CREATE TABLE Academic.Question_Pool (
-    QuestionID           INT IDENTITY(1,1),
-    CourseID             INT           NOT NULL,
-    InstructorID         INT           NOT NULL,
-    QuestionType         VARCHAR(20)   NOT NULL,
-    QuestionText         NVARCHAR(MAX) NOT NULL,
-    Best_Accepted_Answer NVARCHAR(MAX) NULL,
-    isDeleted            BIT           NOT NULL DEFAULT 0,
-    CONSTRAINT PK_Questions PRIMARY KEY (QuestionID) ON FG_MasterData,
-    CONSTRAINT FK_Questions_Course FOREIGN KEY (CourseID)
-        REFERENCES Academic.Course(CourseID),
-    CONSTRAINT FK_Questions_Instructor FOREIGN KEY (InstructorID)
-        REFERENCES Users.Instructor(InstructorID),
-    CONSTRAINT CK_QuestionType CHECK (QuestionType IN ('MCQ','TrueFalse','Text'))
-) ON FG_MasterData;
-GO
-
-CREATE TABLE Academic.Question_Choices (
-    ChoiceID        INT IDENTITY(1,1),
-    QuestionID      INT           NOT NULL,
-    ChoiceText      NVARCHAR(MAX) NOT NULL,
-    IsCorrectChoice BIT           NOT NULL DEFAULT 0,
-    isDeleted       BIT           NOT NULL DEFAULT 0,
-    CONSTRAINT PK_Choices PRIMARY KEY (ChoiceID) ON FG_MasterData,
-    CONSTRAINT FK_Choices_Questions FOREIGN KEY (QuestionID)
-        REFERENCES Academic.Question_Pool(QuestionID)
-) ON FG_MasterData;
-GO
-
--------------------------------------------------------
--- TABLES — ASSESSMENT SCHEMA (FG_Transactional)
+-- TABLES â€” ASSESSMENT SCHEMA (FG_Transactional)
 --------------------------------------------------------
 
 CREATE TABLE Assessment.Exam(
@@ -118,4 +85,5 @@ CREATE TABLE Assessment.Student_Exam_Result(
     CONSTRAINT UQ_Results_Unique UNIQUE (StudentID, ExamID)
 ) ON FG_Transactional;
 GO
+
 
