@@ -1,6 +1,11 @@
 USE ExamSystemDB
 GO
 
+DROP TABLE IF EXISTS [Users].[Student]
+GO
+
+DROP TABLE IF EXISTS [Users].[Instructor]
+GO
 
 DROP TABLE IF EXISTS Users.Person;
 GO 
@@ -9,24 +14,27 @@ DROP TABLE IF EXISTS Users.Account;
 GO
 
 -- Users.Account
-USE [ExamSystemDB];
+
+CREATE TABLE Users.Account
+(
+    AccountId INT IDENTITY(1,1) PRIMARY KEY,
+    Username NVARCHAR(100) COLLATE Latin1_General_CI_AS NOT NULL,
+    Email NVARCHAR(256) COLLATE Latin1_General_CI_AS NULL,
+    PasswordHash VARBINARY(512) NOT NULL, 
+    PasswordSalt VARBINARY(128) NOT NULL,
+    PasswordAlgo NVARCHAR(50)  NOT NULL DEFAULT('PBKDF2-SHA512'),
+    PasswordIterations INT NOT NULL DEFAULT(100000), 
+    IsActive BIT NOT NULL DEFAULT(1),
+    LastLoginTime DATETIME2 NULL,
+    Role NVARCHAR(50) NOT NULL, -- Admin, TrainingManager, Instructor, Student
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    CreatedBy INT NULL,
+    CONSTRAINT UQ_Account_Username UNIQUE (Username),
+    CONSTRAINT UQ_Account_Email UNIQUE (Email),
+    CONSTRAINT CHK_Account_Role CHECK (Role IN ('Admin','TrainingManager','Instructor','Student'))
+) ON FG_MasterData;
 GO
 
-IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE object_id = OBJECT_ID(N'Users.Account') AND type = 'U')
-BEGIN
-    CREATE TABLE Users.Account (
-        AccountId INT IDENTITY(1,1) PRIMARY KEY,
-        Username NVARCHAR(50) NOT NULL UNIQUE,
-        Email NVARCHAR(256) NULL UNIQUE,
-        Password NVARCHAR(256) NOT NULL,
-        Role NVARCHAR(20) NOT NULL,
-        IsActive BIT NOT NULL DEFAULT 1,
-        LastLoginTime DATETIME2 NULL,
-        CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
-        CONSTRAINT CHK_Account_Role CHECK (Role IN ('Admin','Instructor','Student','Manager'))
-    ) ON FG_MasterData;
-END
-GO
 
 -- Users.Person
 CREATE TABLE Users.Person (
