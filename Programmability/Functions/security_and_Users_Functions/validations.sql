@@ -1,0 +1,33 @@
+-- Here are some functions to validate user input for the Users schema, such as validating email addresses and password strength.
+
+-- To validate email addresses
+CREATE OR ALTER FUNCTION Users.fn_ValidateEmail (@Email NVARCHAR(256))
+RETURNS BIT
+AS
+BEGIN
+    IF @Email IS NULL RETURN 1;
+    
+    IF @Email LIKE '%_@__%.__%' 
+       AND @Email NOT LIKE '%@%@%'
+       AND @Email NOT LIKE '%..%' 
+       RETURN 1;
+
+    RETURN 0;
+END;
+GO
+
+-- To validate password strength
+CREATE OR ALTER FUNCTION Users.fn_ValidatePassword (@Password NVARCHAR(4000))
+RETURNS BIT
+AS
+BEGIN
+    IF LEN(@Password) >= 8
+       AND @Password LIKE '%[A-Z]%' 
+       AND @Password LIKE '%[a-z]%'
+       AND @Password LIKE '%[0-9]%'
+       AND @Password LIKE '%[!@#$%^&*()-_+=]%'
+       RETURN 1;
+
+    RETURN 0;
+END;
+GO
