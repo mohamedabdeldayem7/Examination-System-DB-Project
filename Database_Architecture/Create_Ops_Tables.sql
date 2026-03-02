@@ -16,3 +16,4 @@ CREATE TABLE Ops.AuditLog
 	[Values] NVARCHAR(MAX) NULL
 );
 GO
+SELECT * FROM [Ops].[AuditLog];
