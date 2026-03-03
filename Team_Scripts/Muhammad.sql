@@ -65,5 +65,25 @@ EXEC Users.usp_CreateAccount
     @Role = N'GodMode';
 
 
+EXEC Users.usp_CreateAccount 
+    @Username = N'Muhammad_IT', 
+    @Email = N'muhammad@email.com', 
+    @PlainPassword = N'Muhammad@123', 
+    @Role = N'Admin';
+
+EXEC Users.usp_CreateAccount 
+    @Username = N'Muhammad', 
+    @Email = N'muhammad2@email.com', 
+    @PlainPassword = N'Muhammad@123', 
+    @Role = N'Admin';
+
+    
+EXEC Users.usp_CreateAccount 
+    @Username = N'minaa', 
+    @Email = N'minaa@email.com', 
+    @PlainPassword = N'Mina@123', 
+    @Role = N'Instructora';
+
 select * from Users.Account
+
 
