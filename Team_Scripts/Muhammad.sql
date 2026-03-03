@@ -84,6 +84,24 @@ EXEC Users.usp_CreateAccount
     @PlainPassword = N'Mina@123', 
     @Role = N'Instructora';
 
+EXEC Users.usp_CreateAccount 
+    @Username = N'arwa', 
+    @Email = N'arwa@email.com', 
+    @PlainPassword = N'Arwa@123', 
+    @Role = N'TrainingManager';
+
 select * from Users.Account
 
+update Users.Account
+    set PasswordIterations = 100
+
+
+-- test change password procedure
+EXEC Users.usp_ChangePassword
+    @OldPassword = 'Abdo@123', 
+    @NewPassword = 'Abdo@1234', 
+    @Username = 'abdo';
+
+
+select SUSER_NAME()
 
