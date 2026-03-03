@@ -31,13 +31,6 @@ END
 GO
 
 -- Grant permissions to database roles
--- Training manager: manage Org and Students via stored procedures
-GRANT EXECUTE ON SCHEMA::ORG TO db_TrainingManager;
-GRANT EXECUTE ON SCHEMA::USERS TO db_TrainingManager;
-GRANT SELECT ON SCHEMA::ORG TO db_TrainingManager;
-GRANT SELECT ON SCHEMA::Users TO db_TrainingManager;
-
-
 -- Instructor: allowed to execute Academic/Assessment SPs
 GRANT EXECUTE ON SCHEMA::ACADEMIC TO db_Instructor;
 GRANT EXECUTE ON SCHEMA::ASSESSMENT TO db_Instructor;
@@ -48,3 +41,10 @@ GRANT SELECT ON SCHEMA::ASSESSMENT TO db_Instructor;
 -- Student: limited read via views and execute allowed SPs
 GRANT SELECT ON SCHEMA::Users TO db_Student;
 GRANT EXECUTE ON SCHEMA::Assessment TO db_Student;
+
+-- Training manager: manage Org and Students via stored procedures
+ALTER ROLE db_Instructor ADD MEMBER db_TrainingManager; -- each Training Manager is also an Instructor, so they can execute all Instructor SPs
+GRANT EXECUTE ON SCHEMA::ORG TO db_TrainingManager;
+GRANT EXECUTE ON SCHEMA::USERS TO db_TrainingManager;
+GRANT SELECT ON SCHEMA::ORG TO db_TrainingManager;
+GRANT SELECT ON SCHEMA::Users TO db_TrainingManager;

@@ -14,7 +14,7 @@ BEGIN
         IF @LoginName IN (SELECT Username FROM [ExamSystemDB].Users.Account)
         BEGIN
             UPDATE [ExamSystemDB].Users.Account
-            SET LastLoginTime = SYSUTCDATETIME()
+            SET LastLoginTime = getDate()
             WHERE Username = @LoginName;
         END
     END TRY
