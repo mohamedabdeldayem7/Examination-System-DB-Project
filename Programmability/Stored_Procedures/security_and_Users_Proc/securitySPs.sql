@@ -17,8 +17,13 @@ BEGIN
         WHEN @Role = 'Admin' THEN 'db_Admin'
         WHEN @Role = 'TrainingManager' THEN 'db_TrainingManager'
         WHEN @Role = 'Instructor' THEN 'db_Instructor'
-        ELSE 'db_Student' END;
+        WHEN @Role = 'Student' THEN 'db_Student'
+        ELSE NULL
+        END;
 
+    IF @TargetRole IS NULL BEGIN
+        RAISERROR('Invalid role specified.', 16, 1); RETURN; 
+    END
     EXEC sp_addrolemember @TargetRole, @Username;
 END;
 GO
@@ -53,6 +58,10 @@ BEGIN
     -- for duplicate email
     IF EXISTS (SELECT 1 FROM Users.Account WHERE Email = @Email)
         BEGIN RAISERROR('Email already taken.', 16, 1); RETURN; END
+
+    -- for role validation
+    IF Users.fn_ValidateRole(@Role) = 0
+        BEGIN RAISERROR('Invalid role specified.', 16, 1); RETURN; END
 
     -- for password hashing
     DECLARE @salt VARBINARY(128) = CRYPT_GEN_RANDOM(32);

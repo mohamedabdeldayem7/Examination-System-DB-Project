@@ -31,3 +31,14 @@ BEGIN
     RETURN 0;
 END;
 GO
+
+-- to validate Role
+CREATE OR ALTER FUNCTION Users.fn_ValidateRole (@Role NVARCHAR(50))
+RETURNS BIT
+AS
+BEGIN
+    IF @Role IN ('Admin', 'TrainingManager', 'Instructor', 'Student')
+       RETURN 1;
+    RETURN 0;
+END;
+GO
