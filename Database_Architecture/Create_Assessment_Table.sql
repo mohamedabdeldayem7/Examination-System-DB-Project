@@ -1,4 +1,21 @@
 use ExamSystemDB;
+GO 
+
+DROP TABLE IF EXISTS Assessment.Student_Answer;
+GO
+
+DROP TABLE IF EXISTS Assessment.Student_Exam_Result;
+GO
+
+
+DROP TABLE IF EXISTS Assessment.Student_Exam;
+GO
+
+DROP TABLE IF EXISTS Assessment.Exam_Questions;
+GO
+
+DROP TABLE IF EXISTS Assessment.Exam;
+GO
 
 -------------------------------------------------------
 -- TABLES — ASSESSMENT SCHEMA (FG_Transactional)
