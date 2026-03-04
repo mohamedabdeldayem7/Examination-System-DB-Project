@@ -900,9 +900,8 @@ BEGIN
         WHERE a.StudentID = @StudentID AND a.ExamID = @ExamID
           AND q.QuestionType = 'Text' AND a.Is_Correct IS NULL;
 
-        DECLARE @WarningMsg NVARCHAR(200) = NULL;
         IF @Pending > 0
-            SET @WarningMsg = CAST(@Pending AS VARCHAR) + ' text answer(s) still pending review.';
+            RAISERROR('Cannot calculate result — %d text answer(s) still pending review. Grade them first.', 16, 1, @Pending);
 
         DECLARE @CourseID  INT,
                 @ExamMax   DECIMAL(5,2),
@@ -941,8 +940,7 @@ BEGIN
                @PassFail   AS PassFail,
                CASE WHEN @PassFail = 1 THEN 'PASSED' ELSE 'FAILED' END AS ResultText,
                @ScaledMin  AS RequiredMinimum,
-               @Pending    AS PendingTextAnswers,
-               @WarningMsg AS Warning;
+               @Pending    AS PendingTextAnswers;
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
@@ -952,7 +950,7 @@ END;
 GO
 
 -- [18] CALCULATE ALL RESULTS FOR EXAM
----      SET-based INSERT/UPDATE to avoid multiple Result Sets
+-- FIX: Replaced Cursor with SET-based INSERT/UPDATE to avoid multiple Result Sets
 --      and drastically improve performance with large student counts.
 CREATE OR ALTER PROCEDURE Assessment.sp_CalculateAllExamResults
     @ExamID INT
@@ -1010,7 +1008,6 @@ BEGIN
 
         COMMIT TRANSACTION;
 
-        -- Single clean output
         SELECT * FROM Assessment.vw_ExamStatistics     WHERE ExamID = @ExamID;
         SELECT * FROM Assessment.vw_StudentExamResults WHERE ExamID = @ExamID ORDER BY Total_Score DESC;
 
@@ -1021,7 +1018,6 @@ BEGIN
     END CATCH
 END;
 GO
-
 --  SEARCH  [19-24]
 ----------------------------------------------------------------
 
