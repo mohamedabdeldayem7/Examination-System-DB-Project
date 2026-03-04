@@ -48,3 +48,6 @@ GRANT EXECUTE ON SCHEMA::ORG TO db_TrainingManager;
 GRANT EXECUTE ON SCHEMA::USERS TO db_TrainingManager;
 GRANT SELECT ON SCHEMA::ORG TO db_TrainingManager;
 GRANT SELECT ON SCHEMA::Users TO db_TrainingManager;
+
+-- Deny direct DML on critical tables to all users, even those with higher privileges, to enforce the use of stored procedures for data modifications which include necessary business logic and auditing.
+DENY INSERT, UPDATE, DELETE ON Ops.AuditLog TO public;

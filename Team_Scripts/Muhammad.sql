@@ -105,3 +105,28 @@ EXEC Users.usp_ChangePassword
 
 select SUSER_NAME()
 
+
+select Username, [Role], IS_ROLEMEMBER('db_Student', Username)
+from Users.Account
+
+select Username, [Role], IS_ROLEMEMBER('db_Instructor', Username)
+from Users.Account
+
+select Username, [Role], IS_ROLEMEMBER('db_TrainingManager', Username)
+from Users.Account
+
+select Username, [Role], IS_ROLEMEMBER('db_Admin', Username)
+from Users.Account
+
+select * from Ops.AuditLog
+
+select USER_ID('MUHAMMED\Lenovo'), SUSER_NAME()
+
+-- test delete account procedure
+EXEC Users.usp_DeleteAccount Null, 'arwa'
+
+select * from Users.Account
+
+-- test pagination
+EXEC Users.usp_ListAccountsByRole  @Role = NULL, @PageNumber = 1, @IncludeInactive = 1, @PageSize = 10
+
