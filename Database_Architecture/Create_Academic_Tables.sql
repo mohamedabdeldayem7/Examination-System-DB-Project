@@ -5,11 +5,22 @@ DROP TABLE IF EXISTS Academic.Course_Instructor ;
 GO
 DROP TABLE IF EXISTS Academic.Course;
 GO
+DROP TABLE IF EXISTS Academic.Course_Instructor;
+GO
+
+DROP TABLE IF EXISTS Academic.Question_Choices;
+GO
+
+DROP TABLE IF EXISTS Academic.Question_Pool;
+GO
+
+DROP TABLE IF EXISTS Academic.Course;
+GO
 
 --CREATE Academic.Course
 CREATE TABLE Academic.Course
 (	
-	CourseID int PRIMARY KEY ,
+	CourseID int IDENTITY(1,1) PRIMARY KEY ,
 	CourseName varchar(100) NOT NULL ,
 	Description nvarchar(500) NULL ,
 	Max_Degree decimal(5,2) NOT NULL ,
