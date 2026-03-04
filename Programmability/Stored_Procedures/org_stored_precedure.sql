@@ -1,21 +1,4 @@
-use [ExamSystemDB];
-GO 
--- DROP TABLE FIRST 
-DROP TABLE IF EXISTS Ops.AuditLog ;
-GO 
--- CREATE AUDIT LOG TABLE 
-CREATE TABLE Ops.AuditLog
-(
-	AuditId INT IDENTITY (1,1) PRIMARY KEY ,
-	SchemaName NVARCHAR(50) NOT NULL,
-	TableName NVARCHAR(50) NOT NULL,
-	Operation NVARCHAR(10) NOT NULL,
-	KeyValues NVARCHAR(MAX) NOT NULL,
-	ChangedBy NVARCHAR(100) NOT NULL DEFAULT SUSER_SNAME()  ,
-	ChangedAt DATETIME  NOT NULL DEFAULT GETDATE(),
-	Details NVARCHAR(MAX) NULL
-);
-GO
+
 
 -----------------------------------------------------------------------------------
 --Department---------------------------------------------------------------------------------------
@@ -461,7 +444,3 @@ BEGIN
     END CATCH
 END
 GO
-
-USE [ExamSystemDB];
-GO
-
