@@ -72,3 +72,11 @@ CREATE TABLE Users.Instructor
     Office varchar(50) ,
     Is_Manager BIT DEFAULT 0 
 ) ON FG_MasterData;
+
+-- alter Instructor table to add foreign key constraint to Person table
+ALTER TABLE Users.Instructor
+ADD CONSTRAINT FK_Instructor_Person 
+FOREIGN KEY (InstructorID) REFERENCES Users.Person (PersonID)
+ON DELETE CASCADE
+ON UPDATE CASCADE;
+
