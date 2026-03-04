@@ -2,7 +2,7 @@ USE ExamSystemDB;
 GO
 
 -- T1: Prevent exam degrees exceeding course max
---------------------------------------------------
+---------------------------------------------------
 CREATE OR ALTER TRIGGER Assessment.trg_CheckExamDegree
 ON Assessment.Exam_Questions
 AFTER INSERT, UPDATE
