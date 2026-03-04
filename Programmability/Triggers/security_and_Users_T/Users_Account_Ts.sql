@@ -33,8 +33,8 @@ BEGIN
     -- Log which columns changed (simple approach)
     SELECT @vals = CONCAT(
         'Username=', i.Username, '; Email=', ISNULL(i.Email,''), '; Role=', i.Role,
-        '; IsActive=', i.IsActive, 'Last login time=', ISNULL(CONVERT(NVARCHAR(20), i.LastLoginTime, 120), 'NULL'), 
-        'Old values: Username=', d.Username, '; Email=', ISNULL(d.Email,''), '; Role=', d.Role,
+        '; IsActive=', i.IsActive, '; Last login time=', ISNULL(CONVERT(NVARCHAR(20), i.LastLoginTime, 120), 'NULL'), 
+        ' | Old values: Username=', d.Username, '; Email=', ISNULL(d.Email,''), '; Role=', d.Role,
         '; IsActive=', d.IsActive, 'Last login time=', ISNULL(CONVERT(NVARCHAR(20), d.LastLoginTime, 120), 'NULL')
     )
     FROM inserted i, deleted d;
