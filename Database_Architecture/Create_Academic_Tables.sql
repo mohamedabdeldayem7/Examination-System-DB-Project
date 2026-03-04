@@ -70,3 +70,6 @@ CREATE TABLE Academic.Question_Choices (
         REFERENCES Academic.Question_Pool(QuestionID)
 ) ON FG_MasterData;
 
+
+ALTER TABLE Academic.Course_Instructor
+ADD IsDeleted BIT NOT NULL DEFAULT 0;
