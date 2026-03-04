@@ -86,6 +86,11 @@ CREATE TABLE Assessment.Student_Answer (
 ) ON FG_Transactional;
 GO
 
+    ALTER TABLE Assessment.Student_Answer 
+      ADD Answered_At DATETIME DEFAULT GETDATE(),
+      ModifiedBy  NVARCHAR(100) DEFAULT SUSER_NAME();
+GO
+    
 CREATE TABLE Assessment.Student_Exam_Result(
     ResultID    INT IDENTITY(1,1),
     StudentID   INT           NOT NULL,
@@ -102,5 +107,6 @@ CREATE TABLE Assessment.Student_Exam_Result(
     CONSTRAINT UQ_Results_Unique UNIQUE (StudentID, ExamID)
 ) ON FG_Transactional;
 GO
+
 
 
