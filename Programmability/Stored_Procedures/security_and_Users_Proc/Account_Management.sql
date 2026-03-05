@@ -1,5 +1,4 @@
-﻿
--- This procedure creates a new user account in the Users.Account table
+﻿-- This procedure creates a new user account in the Users.Account table
 CREATE OR ALTER PROCEDURE Users.usp_CreateAccount
 (
     @Username NVARCHAR(100),
@@ -79,6 +78,132 @@ BEGIN
 END;
 GO
 
+-- This procedure updates a user account's email and/or role. It checks for appropriate permissions, validates inputs, and only updates provided fields. If the role changes, it also updates the contained database user's role membership accordingly.
+CREATE OR ALTER PROCEDURE Users.usp_UpdateAccount
+(
+    @TargetUsername NVARCHAR(100),
+    @NewEmail NVARCHAR(256) = NULL,
+    @NewRole NVARCHAR(50) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Security Check: only Admin or TrainingManager may update accounts
+    IF IS_ROLEMEMBER('db_Admin') <> 1 AND IS_ROLEMEMBER('db_TrainingManager') <> 1
+    BEGIN
+        RAISERROR('Access Denied.', 16, 1);
+        RETURN;
+    END;
+
+    -- Validate inputs
+    IF @NewEmail IS NOT NULL AND Users.fn_ValidateEmail(@NewEmail) = 0
+    BEGIN
+        RAISERROR('Invalid Email format.', 16, 1);
+        RETURN;
+    END;
+
+    IF @NewRole IS NOT NULL AND Users.fn_ValidateRole(@NewRole) = 0
+    BEGIN
+        RAISERROR('Invalid role specified.', 16, 1);
+        RETURN;
+    END;
+
+    -- Ensure target account exists and active
+    IF NOT EXISTS (SELECT 1 FROM Users.Account WHERE Username = @TargetUsername AND IsActive = 1)
+    BEGIN
+        RAISERROR('Account not found or is inactive.', 16, 1);
+        RETURN;
+    END;
+
+    DECLARE @OldRole NVARCHAR(50);
+    SELECT @OldRole = [Role] FROM Users.Account WHERE Username = @TargetUsername;
+
+    DECLARE @IsNestedTransaction BIT = 0;
+    IF @@TRANCOUNT > 0 SET @IsNestedTransaction = 1;
+
+    DECLARE @sql NVARCHAR(MAX);
+
+    BEGIN TRY
+        IF @IsNestedTransaction = 0
+            BEGIN TRAN;
+        ELSE
+            SAVE TRANSACTION SavePoint_UpdateAccount;
+
+        -- Update only provided columns
+        UPDATE Users.Account
+        SET
+            Email = CASE WHEN @NewEmail IS NOT NULL THEN @NewEmail ELSE Email END,
+            [Role] = CASE WHEN @NewRole IS NOT NULL THEN @NewRole ELSE [Role] END
+        WHERE Username = @TargetUsername;
+
+        -- If role changed, update contained DB user role membership
+        IF @NewRole IS NOT NULL AND @NewRole <> @OldRole
+        BEGIN
+            -- Only proceed if a contained database user with that name exists
+            IF USER_ID(@TargetUsername) IS NOT NULL
+            BEGIN
+                -- Remove from old role if it exists and user is member
+                IF @OldRole IS NOT NULL
+                   AND EXISTS (
+                        SELECT 1
+                        FROM sys.database_role_members drm
+                        JOIN sys.database_principals r ON drm.role_principal_id = r.principal_id
+                        JOIN sys.database_principals u ON drm.member_principal_id = u.principal_id
+                        WHERE r.name = @OldRole AND u.name = @TargetUsername
+                   )
+                BEGIN
+                    SET @sql = N'ALTER ROLE ' + QUOTENAME(@OldRole) + N' DROP MEMBER ' + QUOTENAME(@TargetUsername) + N';';
+                    EXEC sp_executesql @sql;
+                END;
+
+                -- Add to new role if the role exists and user is not already a member
+                IF EXISTS (SELECT 1 FROM sys.database_principals WHERE name = @NewRole AND type = 'R')
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1
+                        FROM sys.database_role_members drm
+                        JOIN sys.database_principals r ON drm.role_principal_id = r.principal_id
+                        JOIN sys.database_principals u ON drm.member_principal_id = u.principal_id
+                        WHERE r.name = @NewRole AND u.name = @TargetUsername
+                    )
+                    BEGIN
+                        SET @sql = N'ALTER ROLE ' + QUOTENAME(@NewRole) + N' ADD MEMBER ' + QUOTENAME(@TargetUsername) + N';';
+                        EXEC sp_executesql @sql;
+                    END;
+                END
+                ELSE
+                BEGIN
+                    -- Optionally raise a warning if new DB role doesn't exist
+                    RAISERROR('Target DB role %s does not exist; role membership not updated.', 10, 1, @NewRole);
+                END;
+            END
+            ELSE
+            BEGIN
+                -- DB user not present; caller may want to create a contained user separately
+                RAISERROR('Contained DB user [%s] does not exist. Create DB user before assigning role.', 10, 1, @TargetUsername) WITH NOWAIT;
+            END;
+        END;
+
+        IF @IsNestedTransaction = 0
+            COMMIT TRAN;
+
+        SELECT 1 AS Success, @TargetUsername AS UpdatedUsername;
+    END TRY
+    BEGIN CATCH
+        IF @IsNestedTransaction = 0
+        BEGIN
+            IF XACT_STATE() <> 0 ROLLBACK TRAN;
+        END
+        ELSE
+        BEGIN
+            IF XACT_STATE() = 1 ROLLBACK TRANSACTION SavePoint_UpdateAccount;
+        END;
+
+        THROW;
+    END CATCH
+END;
+GO
 
 -- This procedure performs a soft delete of a user account by setting IsActive to 0. It also attempts to drop the associated database user if it exists. Only users in the db_Admin or db_TrainingManager roles can execute this procedure.
 CREATE OR ALTER PROCEDURE Users.usp_DeleteAccount

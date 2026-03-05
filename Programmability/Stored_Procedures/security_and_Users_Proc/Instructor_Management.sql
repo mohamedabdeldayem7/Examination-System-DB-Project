@@ -84,3 +84,109 @@ BEGIN
     END CATCH
 END;
 GO
+
+
+-- Update Instructor: updates Instructor row; when @Is_Manager changes, update Users.Account.Role and contained DB role membership
+CREATE OR ALTER PROCEDURE Users.usp_UpdateInstructor
+(
+    @TargetUsername NVARCHAR(100),
+    @Salary DECIMAL(10,2) = NULL,
+    @Office VARCHAR(50) = NULL,
+    @Is_Manager BIT = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Authorization
+    IF IS_ROLEMEMBER('db_admin') <> 1 AND IS_ROLEMEMBER('db_TrainingManager') <> 1
+    BEGIN
+        RAISERROR('Access Denied.',16,1); RETURN;
+    END;
+
+    -- resolve account and instructor
+    DECLARE @AccountId INT;
+    SELECT @AccountId = AccountId FROM Users.Account
+    WHERE Username = @TargetUsername AND IsActive = 1;
+
+    IF @AccountId IS NULL
+    BEGIN
+        RAISERROR('Account not found or inactive.',16,1); RETURN;
+    END;
+
+    DECLARE @InstructorId INT;
+    SELECT @InstructorId = I.InstructorID
+    FROM Users.Instructor I
+        INNER JOIN Users.Person P ON I.InstructorID = P.PersonId
+    WHERE P.AccountId = @AccountId;
+
+    IF @InstructorId IS NULL
+    BEGIN
+        RAISERROR('Instructor record not found for this account.',16,1); RETURN;
+    END;
+
+    DECLARE @OldIsManager BIT = (
+                                SELECT Is_Manager FROM Users.Instructor 
+                                WHERE InstructorID = @InstructorId
+                            );
+    DECLARE @OldRoleLogical NVARCHAR(128) = (
+                                SELECT [Role] FROM Users.Account 
+                                WHERE AccountId = @AccountId
+                            );
+
+    DECLARE @NewRoleLogical NVARCHAR(128) = NULL;
+    IF @Is_Manager IS NOT NULL
+        SET @NewRoleLogical = CASE WHEN @Is_Manager = 1 THEN 'TrainingManager' ELSE 'Instructor' END;
+
+    DECLARE @IsNestedTransaction BIT = 0;
+    IF @@TRANCOUNT > 0 SET @IsNestedTransaction = 1;
+
+    DECLARE @sql NVARCHAR(MAX);
+
+    BEGIN TRY
+        IF @IsNestedTransaction = 0 
+            BEGIN TRAN;
+        ELSE
+            SAVE TRANSACTION SavePoint_UpdateInstructor;
+
+        -- update Instructor row (only provided fields)
+        UPDATE Users.Instructor
+        SET Salary = COALESCE(@Salary, Salary),
+            Office = COALESCE(@Office, Office),
+            Is_Manager = COALESCE(@Is_Manager, Is_Manager)
+        WHERE InstructorID = @InstructorId;
+
+        -- If management flag changed, update Users.Account.Role and DB role membership
+        -- this will update the logical role in Users.Account
+        EXEC Users.usp_UpdateAccount @TargetUsername = @TargetUsername, @NewRole = @NewRoleLogical; 
+     
+        IF @IsNestedTransaction = 0 
+            COMMIT TRAN;
+
+        SELECT @@ROWCOUNT AS RecordsUpdated;
+    END TRY
+    BEGIN CATCH
+        IF @IsNestedTransaction = 0
+        BEGIN
+            IF XACT_STATE() <> 0 ROLLBACK TRAN;
+        END
+        ELSE
+        BEGIN
+            IF XACT_STATE() = 1 ROLLBACK TRANSACTION SavePoint_UpdateInstructor;
+        END;
+        
+        DECLARE @ErrorMessage NVARCHAR(4000) = ERROR_MESSAGE();
+        DECLARE @ErrorSeverity INT = ERROR_SEVERITY();
+        DECLARE @ErrorState INT = ERROR_STATE();
+
+        -- Return the error message and a failure status
+        SELECT 
+            @ErrorState AS Success, 
+            'Registration Failed' AS Status,
+            @ErrorMessage AS TechnicalError,
+            @ErrorSeverity AS Severity;
+
+    END CATCH
+END;
+
+-- 
