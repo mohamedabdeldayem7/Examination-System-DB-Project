@@ -58,6 +58,10 @@ GRANT SELECT  ON Assessment.vw_StudentExamResults        TO db_Student;
 -- Training manager: manage Org and Students via stored procedures
 ALTER ROLE db_Instructor ADD MEMBER db_TrainingManager; -- each Training Manager is also an Instructor, so they can execute all Instructor SPs
 GO
+
+-- Org
+GRANT EXECUTE ON SCHEMA::ORG TO db_TrainingManager
+
  -- Assessment
 GRANT EXECUTE ON Assessment.sp_UpdateExam                TO db_TrainingManager;
 GRANT EXECUTE ON Assessment.sp_DeleteExam                TO db_TrainingManager;
