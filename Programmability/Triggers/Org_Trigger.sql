@@ -166,7 +166,8 @@ BEGIN
             'Org',
             'Track',
             'INSERT',
-            'TrackID ' + CAST(i.TrackId AS NVARCHAR(50)),
+            --'TrackID ' + CAST(i.TrackId AS NVARCHAR(50)),
+            i.TrackId,
             'Added Track: Name = ' + ISNULL(i.TrackName,'') +
             ', DepartmentID = ' + ISNULL(CAST(i.DepartmentId AS NVARCHAR(50)),'NULL')
         FROM inserted i;

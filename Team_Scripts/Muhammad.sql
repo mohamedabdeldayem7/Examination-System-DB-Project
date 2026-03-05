@@ -1,4 +1,4 @@
-
+﻿
 DECLARE @TempPassword NVARCHAR(4000), @rand VARBINARY(16) = CRYPT_GEN_RANDOM(16);
 SET @TempPassword =  CONVERT(VARCHAR(8), HASHBYTES('SHA2_256', @rand), 2); -- not ideal for production
 
@@ -128,5 +128,112 @@ EXEC Users.usp_DeleteAccount Null, 'arwa'
 select * from Users.Account
 
 -- test pagination
-EXEC Users.usp_ListAccountsByRole  @Role = NULL, @PageNumber = 1, @IncludeInactive = 1, @PageSize = 10
+EXEC Users.usp_ListAccountsByRole  @Role = NULL, @PageNumber = 1, @IncludeInactive = 1, @PageSize = 3
+
+
+-- insert some ORG data for the foreign keys
+USE [ExamSystemDB];
+GO
+
+-- 1. إدخال بيانات في جدول الفروع (Org.Branch)
+INSERT INTO Org.Branch (BranchName)
+VALUES 
+(N'Smart Village'),
+(N'Cairo - Nasr City'),
+(N'Alexandria'),
+(N'Mansoura'),
+(N'Assiut');
+GO
+
+-- 2. إدخال بيانات في جدول الأقسام (Org.Department)
+INSERT INTO Org.Department (DepartmentName)
+VALUES 
+(N'Software Development'),
+(N'Data Science'),
+(N'Cyber Security'),
+(N'Business Solutions'),
+(N'Network Administration');
+GO
+
+-- 3. إدخال بيانات في جدول المسارات (Org.Track) 
+-- (ملاحظة: تعتمد على الـ DepartmentId الناتجة من الجدول السابق)
+INSERT INTO Org.Track (DepartmentId, TrackName)
+VALUES 
+(1, N'Full Stack Web Development (ASP.NET)'),
+(1, N'Mobile Application Development (Flutter)'),
+(2, N'Data Analysis'),
+(3, N'Ethical Hacking'),
+(4, N'ERP Solutions (Odoo)');
+GO
+
+-- 4. إدخال بيانات في جدول الدفعات (Org.Intake)
+INSERT INTO Org.Intake (IntakeYear, IntakeSemester)
+VALUES 
+(2023, N'Q1'),
+(2023, N'Q3'),
+(2024, N'Winter'),
+(2024, N'Summer'),
+(2025, N'Q1');
+GO
+
+-- 5. إدخال بيانات في جدول الربط بين الدفعة والمسار (Org.Intake_Track)
+-- (ملاحظة: تربط المعرفات من جدول Intake و Track)
+INSERT INTO Org.Intake_Track (IntakeId, TrackId)
+VALUES 
+(1, 7), -- الدفعة الأولى بمسار Web Development
+(1, 8), -- الدفعة الأولى بمسار Mobile Development
+(2, 9), -- الدفعة الثانية بمسار Data Analysis
+(3, 10), -- الدفعة الثالثة بمسار Ethical Hacking
+(4, 11); -- الدفعة الرابعة بمسار ERP Solutions
+GO
+
+delete from ORG.Track
+
+select * from Org.Branch
+select * from Org.Department
+select * from Org.Track
+select * from Org.Intake
+select * from Org.Intake_Track
+
+-- test create Student
+EXEC Users.usp_RegisterStudent 
+    @Username = 'ahmed_student5', 
+    @Email = 'ahmed2@example.com', 
+    @PlainPassword = 'Password@123', 
+    @FirstName = 'Ahmed', @LastName = 'Ali', 
+    @SSN = '12345678901234', @Phone = '01012345678',
+    @TrackID = 7, @IntakeID = 1, @BranchID = 1;
+
+-- test create Instructor
+EXEC Users.usp_RegisterInstructor 
+    @Username = 'sara_instructor5', 
+    @Email = 'saraaa2@example.com', 
+    @PlainPassword = 'SafePassworddd@2026', 
+    @FirstName = 'Sara', @LastName = 'Hassan', 
+    @SSN = '12345678901236', @Phone = '01012345671',
+    @Salary = 15000.50, @Office = 'Room 302', @Is_Manager = 1;
+
+
+exec Users.usp_DeleteAccount 19, NULL
+exec Users.usp_DeleteAccount 20, NULL
+exec Users.usp_DeleteAccount 22, NULL
+delete from Users.Person
+delete from Users.Student
+delete from Users.Instructor
+
+-- check the created accounts and related person records
+select * from Users.Account
+select * from Users.Person
+select * from Users.Student
+select * from Users.Instructor
+
+-- test Users views
+select * from Users.vw_StudentDetails
+
+select * from Users.vw_InstructorDetails
+
+select * from Users.vw_ActiveContactList
+
+delete from Users.Account
+where [Role] = 'Student' and IsActive = 1
 
