@@ -1,4 +1,4 @@
--- This script creates triggers for the Users.Account table to log changes to an audit log.
+﻿-- This script creates triggers for the Users.Account table to log changes to an audit log.
 
 -- INSERT trigger
 CREATE OR ALTER TRIGGER Users.trg_Account_Insert
@@ -46,17 +46,40 @@ GO
 -- DELETE trigger
 CREATE OR ALTER TRIGGER Users.trg_Account_Delete
 ON Users.Account
-AFTER DELETE
+INSTEAD OF DELETE
 AS
 BEGIN
     SET NOCOUNT ON;
-    DECLARE @AccountId INT, @vals NVARCHAR(MAX);
 
-    SELECT @AccountId = AccountId FROM deleted;
+    -- declare variables to hold deleted values
+    DECLARE @Id INT, @User NVARCHAR(100), @Role NVARCHAR(50), @LogVals NVARCHAR(MAX);
 
-    SELECT @vals = CONCAT('Deleted Username=', Username, '; Role=', Role)
-    FROM deleted;
+    DECLARE delete_cursor CURSOR FOR 
+    SELECT AccountId, Username, [Role] FROM deleted;
 
-    EXEC Ops.usp_LogAudit @SchemaName = 'Users', @TableName = 'Account', @Operation = 'DELETE', @KeyValue = @AccountId, @Values = @vals;
+    OPEN delete_cursor;
+    FETCH NEXT FROM delete_cursor INTO @Id, @User, @Role;
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        -- excute the delete stored procedure to handle cascading deletes and business logic
+        EXEC Users.usp_DeleteAccount @TargetUsername = @User, @TargetAccountId = @Id;
+
+        -- for audit log, we can only log the username and role since the account will be deleted
+        SET @LogVals = CONCAT('Deleted Username=', @User, '; Role=', @Role);
+
+        -- log the delete operation with the account id as key value and the username and role in values
+        EXEC Ops.usp_LogAudit 
+            @SchemaName = 'Users', 
+            @TableName = 'Account', 
+            @Operation = 'DELETE', 
+            @KeyValue = @Id, 
+            @Values = @LogVals;
+
+        FETCH NEXT FROM delete_cursor INTO @Id, @User, @Role;
+    END;
+
+    CLOSE delete_cursor;
+    DEALLOCATE delete_cursor;
 END;
 GO
