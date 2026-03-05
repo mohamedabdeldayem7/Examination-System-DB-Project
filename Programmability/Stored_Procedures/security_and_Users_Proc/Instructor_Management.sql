@@ -232,3 +232,41 @@ BEGIN
     EXEC Users.usp_DeletePerson @PersonId = @ResolvedPersonId, @Username = @ResolvedUsername;
 END;
 GO
+
+-- Get Instructor: retrieves instructor details by either InstructorId or Username; joins with Person and Account to return comprehensive information; checks that at least one identifier is provided
+CREATE OR ALTER PROCEDURE Users.usp_GetInstructor
+(
+    @InstructorId INT = NULL,
+    @Username NVARCHAR(100) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @InstructorId IS NULL AND @Username IS NULL
+    BEGIN
+        SET @Username = SUSER_NAME(); -- default to current user if no identifier provided
+    END
+
+    SELECT 
+        I.InstructorID,
+        P.SSN,
+        A.Username,
+        A.Email,
+        P.FirstName,
+        P.LastName,
+        P.Phone,
+        I.Salary,
+        I.HireDate,
+        I.Office,
+        I.Is_Manager
+    FROM Users.Instructor AS I
+        JOIN Users.Person AS P ON I.InstructorID = P.PersonId
+        LEFT JOIN Users.Account AS A ON P.AccountId = A.AccountId
+    WHERE (I.InstructorID = @InstructorId OR @InstructorId IS NULL)
+      AND (A.Username = @Username OR @Username IS NULL);
+END;
+GO
+
+
+

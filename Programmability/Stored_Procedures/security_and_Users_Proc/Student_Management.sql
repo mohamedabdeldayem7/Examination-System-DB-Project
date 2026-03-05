@@ -204,3 +204,38 @@ BEGIN
     EXEC Users.usp_DeletePerson @PersonId = @ResolvedPersonId, @Username = @ResolvedUsername;
 END;
 GO
+
+-- Get Student: retrieve student details by StudentId or Username; returns join of Account, Person and Student data (non-sensitive)
+CREATE OR ALTER PROCEDURE Users.usp_GetStudent
+(
+    @StudentId INT = NULL,
+    @Username NVARCHAR(100) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @StudentId IS NULL AND @Username IS NULL
+    BEGIN
+        SET @Username = SUSER_NAME(); -- default to current user if no identifier provided
+    END
+
+    SELECT 
+        S.StudentID,
+        P.SSN,
+        A.Username,
+        A.Email,
+        A.IsActive,
+        P.FirstName,
+        P.LastName,
+        P.Phone,
+        S.TrackID,
+        S.IntakeID,
+        S.BranchID
+    FROM Users.Student AS S
+    JOIN Users.Person AS P ON S.StudentID = P.PersonId
+    LEFT JOIN Users.Account AS A ON P.AccountId = A.AccountId
+    WHERE (S.StudentID = @StudentId OR @StudentId IS NULL)
+      AND (A.Username = @Username OR @Username IS NULL);
+END;
+GO
