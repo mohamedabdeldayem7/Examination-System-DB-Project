@@ -42,5 +42,23 @@ ON [Org].[Track]([DepartmentId]);
 CREATE NONCLUSTERED INDEX IX_Track_Name
 ON [Org].[Track]([TrackName]);
 
+-- Users
+-- Account indexes
+CREATE NONCLUSTERED INDEX IX_Account_Username ON Users.Account(Username) ON FG_Indexes;
+CREATE NONCLUSTERED INDEX IX_Account_Email ON Users.Account(Email) ON FG_Indexes;
+
+-- Person indexes
+CREATE NONCLUSTERED INDEX IX_Person_AccountId ON Users.Person(AccountId) ON FG_Indexes;
+CREATE NONCLUSTERED INDEX IX_Person_LastName_FirstName ON Users.Person(LastName, FirstName) ON FG_Indexes;
+
+-- Student indexes
+CREATE NONCLUSTERED INDEX IX_Student_Track ON Users.Student([TrackID]) ON FG_Indexes;
+CREATE NONCLUSTERED INDEX IX_Student_Intake ON Users.Student([IntakeID]) ON FG_Indexes;
+
+-- Instructor indexes
+CREATE NONCLUSTERED INDEX IX_Instructor_HireDate ON Users.Instructor([HireDate]) ON FG_Indexes;
+
+
+
 
 
