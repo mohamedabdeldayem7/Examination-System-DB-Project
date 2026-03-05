@@ -1,4 +1,4 @@
-
+﻿
 -- This procedure creates a new user account in the Users.Account table
 CREATE OR ALTER PROCEDURE Users.usp_CreateAccount
 (
@@ -6,7 +6,8 @@ CREATE OR ALTER PROCEDURE Users.usp_CreateAccount
     @Email NVARCHAR(256) = NULL,
     @PlainPassword NVARCHAR(4000),
     @Role NVARCHAR(50),
-    @CreatedBy INT = NULL
+    @CreatedBy INT = NULL,
+    @NewAccountId INT OUTPUT 
 )
 AS
 BEGIN
@@ -39,31 +40,45 @@ BEGIN
     DECLARE @iterations INT = 100; -- should be higher in production, but using a lower number here for demonstration and testing purposes to avoid long execution times
     DECLARE @hash VARBINARY(512) = [Users].[fn_PBKDF2_SHA512_OneBlock](@PlainPassword, @salt, @iterations, 64);
 
-    -- for inserting the new account
+    -- Transaction Management
+    DECLARE @IsNestedTransaction BIT = 0;
+    IF @@TRANCOUNT > 0 
+        SET @IsNestedTransaction = 1;
+
     BEGIN TRY
-        BEGIN TRAN;
+        IF @IsNestedTransaction = 0 
+            BEGIN TRAN;
+        ELSE
+            SAVE TRANSACTION SavePoint_CreateAccount;
 
-            INSERT INTO Users.Account (Username, Email, PasswordHash, PasswordSalt, Role, CreatedBy, PasswordIterations)
-            VALUES (@Username, @Email, @hash, @salt, @Role, @CreatedBy, 100);
+        -- for inserting the new account
+        INSERT INTO Users.Account (Username, Email, PasswordHash, PasswordSalt, Role, CreatedBy, PasswordIterations)
+        VALUES (@Username, @Email, @hash, @salt, @Role, @CreatedBy, @iterations);
 
-            DECLARE @NewId INT = SCOPE_IDENTITY();
+        SET @NewAccountId = SCOPE_IDENTITY(); 
 
-            EXEC Users.usp_CreateDBUser @Username, @PlainPassword, @Role;
+        EXEC Users.usp_CreateDBUser @Username, @PlainPassword, @Role;
 
-        COMMIT TRAN;
-        
-        SELECT @NewId AS AccountId, 'Success' AS Status;
-
+        IF @IsNestedTransaction = 0 
+            COMMIT TRAN; 
+            
     END TRY
     BEGIN CATCH
-        IF XACT_STATE() <> 0 ROLLBACK TRAN;
+        -- close trans
+        IF @IsNestedTransaction = 0 
+        BEGIN
+            IF XACT_STATE() <> 0 ROLLBACK TRAN;
+        END
+        ELSE
+        BEGIN
+            IF XACT_STATE() = 1 ROLLBACK TRANSACTION SavePoint_CreateAccount;
+        END;
         
-        DECLARE @ErrorMessage NVARCHAR(4000) = ERROR_MESSAGE();
-        raiserror(@ErrorMessage, 16, 1);
-        RAISERROR('An internal error occurred. Please contact support.', 16, 1);
+        THROW; 
     END CATCH
 END;
 GO
+
 
 -- This procedure performs a soft delete of a user account by setting IsActive to 0. It also attempts to drop the associated database user if it exists. Only users in the db_Admin or db_TrainingManager roles can execute this procedure.
 CREATE OR ALTER PROCEDURE Users.usp_DeleteAccount
