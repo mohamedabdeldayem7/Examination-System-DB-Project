@@ -275,7 +275,32 @@ AS
 BEGIN
     SET NOCOUNT ON ;
     SET XACT_ABORT ON ;
+
     BEGIN TRY
+        -- get InstructorID That assained in same course with this question
+        DECLARE @InstructorID INT;
+        SELECT @InstructorID = CI.InstructorID
+        FROM Academic.Question_Pool QP
+            JOIN Academic.Course_Instructor CI ON QP.CourseID = CI.CourseID
+        WHERE QP.QuestionID = @QuestionID
+          AND QP.IsDeleted = 0
+          AND CI.IsDeleted = 0;
+         -- Authorization: Only the assigned instructor can delete the question
+
+         IF @InstructorID IS NULL
+            THROW 51008, 'Question not found or not assigned to any instructor.', 1;
+    
+        -- get username of the instructor and compare with current user
+        DECLARE @InstructorUsername NVARCHAR(100);
+        SELECT @InstructorUsername = A.Username
+        FROM Users.Account A
+            JOIN Users.Person P ON A.AccountId = P.AccountId
+        WHERE P.PersonId = @InstructorID
+          AND A.IsActive = 1;
+
+        IF @InstructorUsername IS NULL OR @InstructorUsername <> SUSER_SNAME()
+            THROW 51009, 'Access Denied. Only the assigned instructor can delete this question.', 1;
+    
     IF NOT EXISTS (
             SELECT 1 
             FROM Academic.Question_Pool
