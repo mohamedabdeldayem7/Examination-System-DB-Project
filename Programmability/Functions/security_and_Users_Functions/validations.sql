@@ -44,13 +44,13 @@ END;
 GO
 
 -- validate phone number
-CREATE FUNCTION Users.fn_ValidateEgyptianPhone (@Phone NVARCHAR(20))
+CREATE OR ALTER FUNCTION Users.fn_ValidateEgyptianPhone (@Phone NVARCHAR(20))
 RETURNS BIT
 AS
 BEGIN
     DECLARE @IsValid BIT = 0;
 
-    IF @Phone LIKE '01[0125][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+    IF @Phone LIKE '01[0125][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]' OR @Phone IS NULL
     BEGIN
         SET @IsValid = 1;
     END

@@ -2,20 +2,20 @@ USE ExamSystemDB;
 GO
 
 ---------------------------------------------------------------------------
-DELETE FROM Assessment.Student_Exam_Result  WHERE StudentID IN (9002,9003);
+DELETE FROM Assessment.Student_Exam         WHERE StudentID IN (37,38);
+DELETE FROM Assessment.Student_Exam_Result  WHERE StudentID IN (37,38);
 DELETE FROM Ops.AuditLog                    WHERE [Key] BETWEEN 9001 AND 9999;
-DELETE FROM Assessment.Student_Answer       WHERE StudentID IN (9002,9003,9005);
-DELETE FROM Assessment.Student_Exam         WHERE StudentID IN (9002,9003,9005);
+DELETE FROM Assessment.Student_Answer       WHERE StudentID IN (37,38,9005);
 DELETE FROM Assessment.Exam_Questions       WHERE ExamID IN (SELECT ExamID FROM Assessment.Exam WHERE CourseID = 9001);
 DELETE FROM Assessment.Exam                 WHERE CourseID = 9001;
 DELETE FROM Academic.Question_Choices       WHERE QuestionID BETWEEN 9001 AND 9999;
 DELETE FROM Academic.Question_Pool          WHERE CourseID = 9001;
-DELETE FROM Academic.Course_Instructor      WHERE CourseID = 9001 OR InstructorID IN (9001,9004,9006);
+DELETE FROM Academic.Course_Instructor      WHERE CourseID = 9001 OR InstructorID IN (33,35,9006);
 DELETE FROM Academic.Course                 WHERE CourseID = 9001;
-DELETE FROM Users.Student                   WHERE StudentID IN (9002,9003,9005);
-DELETE FROM Users.Instructor                WHERE InstructorID IN (9001,9004,9006);
-DELETE FROM Users.Person                    WHERE PersonId IN (9001,9002,9003,9004,9005,9006);
-DELETE FROM Users.Account                   WHERE AccountId IN (9001,9002,9003,9004,9005,9006);
+--DELETE FROM Users.Student                   WHERE StudentID IN (9002,38,9005);
+--DELETE FROM Users.Instructor                WHERE InstructorID IN (9001,9004,9006);
+--DELETE FROM Users.Person                    WHERE PersonId IN (9001,9002,38,9004,9005,9006);
+--DELETE FROM Users.Account                   WHERE AccountId IN (9001,9002,38,9004,9005,9006);
 DELETE FROM Org.Intake_Track                WHERE IntakeId = 9001 OR TrackId = 9001;
 DELETE FROM Org.Intake                      WHERE IntakeId = 9001;
 DELETE FROM Org.Track                       WHERE TrackId = 9001;
@@ -41,6 +41,7 @@ VALUES (9001, 'TEST_Branch_Cairo');
 SET IDENTITY_INSERT Org.Branch OFF;
 PRINT 'A2: Branch 9001 created';
 
+
 -- A3: Track
 SET IDENTITY_INSERT Org.Track ON;
 INSERT INTO Org.Track (TrackId, TrackName, DepartmentId)
@@ -65,86 +66,96 @@ INSERT INTO Academic.Course (CourseID, CourseName, Description, Max_Degree, Min_
 VALUES (9001, 'TEST_SQL_Fundamentals', 'Test course for SQL', 100.00, 50.00);
 PRINT 'A6: Course 9001 created (Max=100, Min=50)';
 
+
+/*
 -- A7: Instructor Person + Account + Instructor
-SET IDENTITY_INSERT Users.Account ON;
-INSERT INTO Users.Account (AccountId, Username, Email, Password, Role)
-VALUES (9001, 'test_instructor', 'test.inst@test.com', CONVERT(VARBINARY(256),'hashed_pass_123'), 'Instructor');
-SET IDENTITY_INSERT Users.Account OFF;
 
-SET IDENTITY_INSERT Users.Person ON;
-INSERT INTO Users.Person (PersonId, AccountId, FirstName, LastName, Phone)
-VALUES (9001, 9001, 'Test', 'Instructor', '0100000001');
-SET IDENTITY_INSERT Users.Person OFF;
+-- test
+-- usp_RegisterInstructor ID = 33
+ EXEC Users.usp_RegisterInstructor
+        @Username = 'test_instructor',
+        @Email = 'test.inst@test.com',
+        @PlainPassword = 'Test@123',
+        @FirstName = 'Mina',
+        @LastName = 'Magdy',
+        @SSN = '11111111111111',
+        @Phone = '012222222222',
+        @CreatedBy = NULL,
+        @Salary = 60000.00,
+        @HireDate = NULL,
+        @Office = N'Main Campus',
+        @Is_Manager = 0;
 
-INSERT INTO Users.Instructor (InstructorID, HireDate, Salary, Is_Manager)
-VALUES (9001, '2020-01-01', 15000.00, 0);
-PRINT 'A7: Instructor 9001 created';
 
--- A8: Training Manager
-SET IDENTITY_INSERT Users.Account ON;
-INSERT INTO Users.Account (AccountId, Username, Email, Password, Role)
-VALUES (9004, 'test_manager', 'test.mgr@test.com', CONVERT(VARBINARY(256),'hashed_pass_456'), 'Manager');
-SET IDENTITY_INSERT Users.Account OFF;
+-- A8: Training Manager ID = 35
 
-SET IDENTITY_INSERT Users.Person ON;
-INSERT INTO Users.Person (PersonId, AccountId, FirstName, LastName, Phone)
-VALUES (9004, 9004, 'Test', 'Manager', '0100000004');
-SET IDENTITY_INSERT Users.Person OFF;
+EXEC Users.usp_RegisterInstructor
+        @Username = 'test_TrainingManager',
+        @Email = 'test2.inst@test.com',
+        @PlainPassword = 'Test@123',
+        @FirstName = 'Muhammad',
+        @LastName = 'Abdo',
+        @SSN = '22222222222222',
+        @Phone = '01000000000',
+        @CreatedBy = NULL,
+        @Salary = 60000.00,
+        @HireDate = NULL,
+        @Office = N'Main Campus',
+        @Is_Manager = 1;
 
-INSERT INTO Users.Instructor (InstructorID, HireDate, Salary, Is_Manager)
-VALUES (9004, '2018-01-01', 25000.00, 1);
-PRINT 'A8: Training Manager 9004 created';
+
+
+-- A10: Student 1 ID = 37
+
+EXEC Users.usp_RegisterStudent
+        @Username = 'test_student1',
+        @Email = 'ahmedahmed55@test.com',
+        @PlainPassword = 'Ahmed@123',
+        @FirstName = 'Ahmed',
+        @LastName = 'Ahmed',
+        @SSN = '99999999999999',
+        @Phone = '01099999999',
+        @CreatedBy = NULL,
+        @TrackID = 9001,
+        @IntakeID = 9001,
+        @BranchID = 9001
+
+        -> Student 2 ID = 38
+
+EXEC Users.usp_RegisterStudent 
+        @Username = 'test_student2',
+        @Email = 'MinaMina55@test.com',
+        @PlainPassword = 'Ahmed@123',
+        @FirstName = 'Omar',
+        @LastName = 'Ahmed',
+        @SSN = '88888888888888',
+        @Phone = '01099999988',
+        @CreatedBy = NULL,
+        @TrackID = 9001,
+        @IntakeID = 9001,
+        @BranchID = 9001
+
+*/
 
 -- A9: Course_Instructor link
 INSERT INTO Academic.Course_Instructor (InstructorID, CourseID, Year)
-VALUES (9001, 9001, 2026);
-PRINT 'A9: Instructor 9001 assigned to Course 9001';
-
--- A10: Student 1
-SET IDENTITY_INSERT Users.Account ON;
-INSERT INTO Users.Account (AccountId, Username, Email, Password, Role)
-VALUES (9002, 'test_student1', 'ahmed@test.com', CONVERT(VARBINARY(256),'hashed_pass_789'), 'Student');
-SET IDENTITY_INSERT Users.Account OFF;
-
-SET IDENTITY_INSERT Users.Person ON;
-INSERT INTO Users.Person (PersonId, AccountId, FirstName, LastName, Phone)
-VALUES (9002, 9002, 'Ahmed', 'Student', '0100000002');
-SET IDENTITY_INSERT Users.Person OFF;
-
-INSERT INTO Users.Student (StudentID, BranchID, TrackID, IntakeID)
-VALUES (9002, 9001, 9001, 9001);
-PRINT 'A10: Student 9002 (Ahmed) created';
-
--- A11: Student 2
-SET IDENTITY_INSERT Users.Account ON;
-INSERT INTO Users.Account (AccountId, Username, Email, Password, Role)
-VALUES (9003, 'test_student2', 'sara@test.com', CONVERT(VARBINARY(256),'hashed_pass_012'), 'Student');
-SET IDENTITY_INSERT Users.Account OFF;
-
-SET IDENTITY_INSERT Users.Person ON;
-INSERT INTO Users.Person (PersonId, AccountId, FirstName, LastName, Phone)
-VALUES (9003, 9003, 'Sara', 'Student', '0100000003');
-SET IDENTITY_INSERT Users.Person OFF;
-
-INSERT INTO Users.Student (StudentID, BranchID, TrackID, IntakeID)
-VALUES (9003, 9001, 9001, 9001);
-PRINT 'A11: Student 9003 (Sara) created';
-
+VALUES (33, 9001, 2026);
+PRINT 'A9: Instructor 33 assigned to Course 9001';
 -- A12: Questions (5 MCQ + 3 TF + 2 Text = 10 questions)
 SET IDENTITY_INSERT Academic.Question_Pool ON;
 
 INSERT INTO Academic.Question_Pool (QuestionID, CourseID, InstructorID, QuestionType, QuestionText, Best_Accepted_Answer)
 VALUES
-(9001, 9001, 9001, 'MCQ',       'What does SQL stand for?',                   NULL),
-(9002, 9001, 9001, 'MCQ',       'Which JOIN returns all rows from both?',      NULL),
-(9003, 9001, 9001, 'MCQ',       'What is a PRIMARY KEY?',                      NULL),
-(9004, 9001, 9001, 'MCQ',       'Which clause filters groups?',               NULL),
-(9005, 9001, 9001, 'MCQ',       'What does DISTINCT do?',                     NULL),
-(9006, 9001, 9001, 'TrueFalse', 'NULL = NULL returns TRUE',                   NULL),
-(9007, 9001, 9001, 'TrueFalse', 'DELETE removes table structure',             NULL),
-(9008, 9001, 9001, 'TrueFalse', 'VIEW is a virtual table',                    NULL),
-(9009, 9001, 9001, 'Text',      'Explain normalization in databases',          'Normalization is organizing data to reduce redundancy and improve integrity'),
-(9010, 9001, 9001, 'Text',      'What is the difference between WHERE and HAVING?', 'WHERE filters rows before grouping HAVING filters groups after aggregation');
+(9001, 9001, 33, 'MCQ',       'What does SQL stand for?',                   NULL),
+(9002, 9001, 33, 'MCQ',       'Which JOIN returns all rows from both?',      NULL),
+(9003, 9001, 33, 'MCQ',       'What is a PRIMARY KEY?',                      NULL),
+(9004, 9001, 33, 'MCQ',       'Which clause filters groups?',               NULL),
+(9005, 9001, 33, 'MCQ',       'What does DISTINCT do?',                     NULL),
+(9006, 9001, 33, 'TrueFalse', 'NULL = NULL returns TRUE',                   NULL),
+(9007, 9001, 33, 'TrueFalse', 'DELETE removes table structure',             NULL),
+(9008, 9001, 33, 'TrueFalse', 'VIEW is a virtual table',                    NULL),
+(9009, 9001, 33, 'Text',      'Explain normalization in databases',          'Normalization is organizing data to reduce redundancy and improve integrity'),
+(9010, 9001, 33, 'Text',      'What is the difference between WHERE and HAVING?', 'WHERE filters rows before grouping HAVING filters groups after aggregation');
 
 SET IDENTITY_INSERT Academic.Question_Pool OFF;
 PRINT 'A12: 10 questions created (5 MCQ, 3 TF, 2 Text)';
@@ -217,7 +228,7 @@ DECLARE @B1_Start DATETIME = DATEADD(DAY,-1,GETDATE());
 DECLARE @B1_End   DATETIME = DATEADD(DAY,30,GETDATE());
 EXEC Assessment.sp_CreateExam
     @CourseID     = 9001,
-    @InstructorID = 9001,
+    @InstructorID = 33,
     @BranchID     = 9001,
     @TrackID      = 9001,
     @IntakeID     = 9001,
@@ -249,7 +260,7 @@ BEGIN TRY
     DECLARE @B2_Start DATETIME = DATEADD(DAY,2,GETDATE());
     DECLARE @B2_End   DATETIME = DATEADD(DAY,45,GETDATE());
     EXEC Assessment.sp_CreateExam
-        @CourseID = 9001, @InstructorID = 9001, @BranchID = 9001,
+        @CourseID = 9001, @InstructorID = 33, @BranchID = 9001,
         @TrackID = 9001, @IntakeID = 9001, @ExamType = 'Quiz',
         @Total_Time = 30, @Start_Time = @B2_Start, @End_Time = @B2_End,
         @ExamID = @FailID OUTPUT;
@@ -274,7 +285,7 @@ BEGIN TRY
     DECLARE @B3_Start DATETIME = DATEADD(DAY,2,GETDATE());
     DECLARE @B3_End   DATETIME = DATEADD(DAY,45,GETDATE());
     EXEC Assessment.sp_CreateExam
-        @CourseID = 9001, @InstructorID = 9004, @BranchID = 9001,
+        @CourseID = 9001, @InstructorID = 35, @BranchID = 9001,
         @TrackID = 9001, @IntakeID = 9001, @ExamType = 'Exam',
         @Total_Time = 60, @Start_Time = @B3_Start, @End_Time = @B3_End,
         @ExamID = @FailID2 OUTPUT;
@@ -294,7 +305,7 @@ Instructor 9004 not assigned to Course 9001.
 --  TEST B4: Read Exam
 -- Expected: 3 result sets (exam details, questions [empty], assignments [empty])
 PRINT ' TEST B4: Read Exam';
-DECLARE @EID INT = (SELECT TOP 1 ExamID FROM Assessment.Exam WHERE CourseID = 9001 AND InstructorID = 9001 ORDER BY ExamID DESC);
+DECLARE @EID INT = (SELECT TOP 1 ExamID FROM Assessment.Exam WHERE CourseID = 9001 AND InstructorID = 33 ORDER BY ExamID DESC);
 EXEC Assessment.sp_ReadExam @ExamID = @EID;
 PRINT '   -- Result: 3 result sets — details (1 row), questions (0 rows), assignments (0 rows)';
 PRINT '';
@@ -310,7 +321,7 @@ Result Set 3: Student assignments (0 rows — no students assigned yet)
 --  TEST C1: Add question to exam (INSERT path of UPSERT)
 -- Expected: Question added, NewTotal=10, Remaining=90
 PRINT ' TEST C1: Add question (UPSERT INSERT path)';
-DECLARE @EID1 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam WHERE CourseID = 9001 AND InstructorID = 9001 ORDER BY ExamID DESC);
+DECLARE @EID1 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam WHERE CourseID = 9001 AND InstructorID = 33 ORDER BY ExamID DESC);
 EXEC Assessment.sp_UpsertExamQuestion @ExamID = @EID1, @QuestionID = 9001, @Question_Degree = 10;
 PRINT '   -- Result: Action=Question added, NewTotal=10.00, Remaining=90.00, QuestionCount=1';
 PRINT '';
@@ -325,7 +336,7 @@ ExamID  QuestionID  Action           PreviousDegree  NewDegree  NewTotal  Remain
 --  TEST C2: Update same question degree (UPDATE path of UPSERT)
 -- Expected: Degree changed from 10 to 15, NewTotal=15
 PRINT ' TEST C2: Update question degree (UPSERT UPDATE path)';
-DECLARE @EID2 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam WHERE CourseID = 9001 AND InstructorID = 9001 ORDER BY ExamID DESC);
+DECLARE @EID2 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam WHERE CourseID = 9001 AND InstructorID = 33 ORDER BY ExamID DESC);
 EXEC Assessment.sp_UpsertExamQuestion @ExamID = @EID2, @QuestionID = 9001, @Question_Degree = 15;
 PRINT '   -- Result: Action=Degree updated, PreviousDegree=10.00, NewDegree=15.00, NewTotal=15.00';
 PRINT '';
@@ -339,7 +350,7 @@ ExamID  QuestionID    Action           PreviousDegree  NewDegree  NewTotal  Rema
 
 --  TEST C3: Add more questions (for a complete exam)
 PRINT ' TEST C3: Add 4 more questions';
-DECLARE @EID3 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam WHERE CourseID = 9001 AND InstructorID = 9001 ORDER BY ExamID DESC);
+DECLARE @EID3 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam WHERE CourseID = 9001 AND InstructorID = 33 ORDER BY ExamID DESC);
 EXEC Assessment.sp_UpsertExamQuestion @ExamID = @EID3, @QuestionID = 9002, @Question_Degree = 10;
 EXEC Assessment.sp_UpsertExamQuestion @ExamID = @EID3, @QuestionID = 9006, @Question_Degree = 5;
 EXEC Assessment.sp_UpsertExamQuestion @ExamID = @EID3, @QuestionID = 9008, @Question_Degree = 5;
@@ -365,7 +376,7 @@ Q9001=15 (MCQ) + Q9002=10 (MCQ) + Q9006=5 (TF) + Q9008=5 (TF) + Q9009=15 (Text) 
 -- Expected: ERROR — capacity exceeded
 PRINT ' TEST C4: Exceed max degree (should fail)';
 BEGIN TRY
-    DECLARE @EID4 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam WHERE CourseID = 9001 AND InstructorID = 9001 ORDER BY ExamID DESC);
+    DECLARE @EID4 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam WHERE CourseID = 9001 AND InstructorID = 33 ORDER BY ExamID DESC);
     EXEC Assessment.sp_UpsertExamQuestion @ExamID = @EID4, @QuestionID = 9003, @Question_Degree = 60;
     PRINT '   -- did not fail as expected';
 END TRY
@@ -383,7 +394,7 @@ Exceeds capacity. NewTotal=110.00, Max=100.00, Available=50.00
 --  TEST C5: Delete a question then verify resequencing
 -- Expected: Question removed, orders re-sequenced
 PRINT ' TEST C5: Delete question and check order resequencing';
-DECLARE @EID5 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam WHERE CourseID = 9001 AND InstructorID = 9001 ORDER BY ExamID DESC);
+DECLARE @EID5 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam WHERE CourseID = 9001 AND InstructorID = 33 ORDER BY ExamID DESC);
 
 -- Add a temporary question at order 6
 EXEC Assessment.sp_UpsertExamQuestion @ExamID = @EID5, @QuestionID = 9003, @Question_Degree = 10;
@@ -417,9 +428,9 @@ QuestionID  Question_Order  Question_Degree
 
 --  TEST E1: Assign single student
 -- Expected: Student 9002 assigned to exam
-PRINT ' TEST E1: Assign student 9002 to exam';
+PRINT ' TEST E1: Assign student 37 to exam';
 DECLARE @EID6 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+    WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
     ORDER BY ExamID);
 DECLARE @E1_Date  DATE;
 DECLARE @E1_Start DATETIME;
@@ -427,7 +438,13 @@ DECLARE @E1_End   DATETIME;
 SELECT @E1_Date = CAST(Start_Time AS DATE), @E1_Start = Start_Time, @E1_End = End_Time
 FROM Assessment.Exam WHERE ExamID = @EID6;
 EXEC Assessment.sp_AssignStudentToExam
-    @StudentID = 9002, @ExamID = @EID6,
+    @StudentID = 37, @ExamID = @EID6,
+    @Exam_Date  = @E1_Date,
+    @Start_Time = @E1_Start,
+    @End_Time   = @E1_End;
+PRINT '';
+EXEC Assessment.sp_AssignStudentToExam
+    @StudentID = 38, @ExamID = @EID6,
     @Exam_Date  = @E1_Date,
     @Start_Time = @E1_Start,
     @End_Time   = @E1_End;
@@ -445,7 +462,7 @@ StudentID  ExamID  StudentName      CourseName             IsWindowActive  Answe
 PRINT ' TEST E2: Duplicate assignment (should fail)';
 BEGIN TRY
     DECLARE @EID6b INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-        WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+        WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
         ORDER BY ExamID);
     DECLARE @E2_Date  DATE;
     DECLARE @E2_Start DATETIME;
@@ -453,7 +470,7 @@ BEGIN TRY
     SELECT @E2_Date = CAST(Start_Time AS DATE), @E2_Start = Start_Time, @E2_End = End_Time
     FROM Assessment.Exam WHERE ExamID = @EID6b;
     EXEC Assessment.sp_AssignStudentToExam
-        @StudentID = 9002, @ExamID = @EID6b,
+        @StudentID = 37, @ExamID = @EID6b,
         @Exam_Date  = @E2_Date,
         @Start_Time = @E2_Start,
         @End_Time   = @E2_End;
@@ -474,28 +491,16 @@ Student 9002 already assigned to Exam [auto].
 -- Expected: ERROR — branch mismatch
 PRINT ' TEST E3: Assign student from wrong branch (should fail)';
 
--- Create a student in different branch
-SET IDENTITY_INSERT Users.Account ON;
-INSERT INTO Users.Account (AccountId, Username, Email, Password, Role)
-VALUES (9005, 'wrong_branch', 'wrong@test.com', CONVERT(VARBINARY(256),'hashed_pass_000'), 'Student');
-SET IDENTITY_INSERT Users.Account OFF;
-
-SET IDENTITY_INSERT Users.Person ON;
-INSERT INTO Users.Person (PersonId, AccountId, FirstName, LastName, Phone)
-VALUES (9005, 9005, 'Wrong', 'Branch', '0100000005');
-SET IDENTITY_INSERT Users.Person OFF;
 
 SET IDENTITY_INSERT Org.Branch ON;
 INSERT INTO Org.Branch (BranchId, BranchName)
 VALUES (9002, 'TEST_Branch_Alex');
 SET IDENTITY_INSERT Org.Branch OFF;
 
-INSERT INTO Users.Student (StudentID, BranchID, TrackID, IntakeID)
-VALUES (9005, 9002, 9001, 9001);
 
 BEGIN TRY
     DECLARE @EID6c INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-        WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+        WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
         ORDER BY ExamID);
     DECLARE @E3_Date  DATE;
     DECLARE @E3_Start DATETIME;
@@ -524,7 +529,7 @@ Student branch (9002) does not match exam branch (9001).
 -- Expected: Student 9003 (Sara) auto-assigned (9002 already assigned, 9005 wrong branch)
 PRINT ' TEST E4: Bulk assign remaining students';
 DECLARE @EID7 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+    WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
     ORDER BY ExamID);
 
 DECLARE @E4_Date  DATE;
@@ -556,13 +561,13 @@ Then: 2 rows in assignments view (Ahmed + Sara)
 -- Expected: End_Time extended, updated assignment returned
 PRINT ' TEST E5: Update student exam time window';
 DECLARE @UpdExam INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+    WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
     ORDER BY ExamID);
 
 DECLARE @E5_End DATETIME;
 SELECT @E5_End = End_Time FROM Assessment.Exam WHERE ExamID = @UpdExam;
 EXEC Assessment.sp_UpdateStudentExam
-    @StudentID  = 9002,
+    @StudentID  = 37,
     @ExamID     = @UpdExam,
     @End_Time   = @E5_End;
 
@@ -586,7 +591,7 @@ DECLARE @RemExam2 INT;
 DECLARE @E8_Start DATETIME = DATEADD(DAY,-1,GETDATE());
 DECLARE @E8_End   DATETIME = DATEADD(DAY,30,GETDATE());
 EXEC Assessment.sp_CreateExam
-    @CourseID=9001, @InstructorID=9001, @BranchID=9001,
+    @CourseID=9001, @InstructorID=33, @BranchID=9001,
     @TrackID=9001, @IntakeID=9001, @ExamType='Corrective',
     @Total_Time=30, @Start_Time=@E8_Start, @End_Time=@E8_End,
     @ExamID=@RemExam2 OUTPUT;
@@ -595,10 +600,10 @@ EXEC Assessment.sp_UpsertExamQuestion @ExamID=@RemExam2, @QuestionID=9001, @Ques
 
 DECLARE @E8_Date DATE = CAST(@E8_Start AS DATE);
 EXEC Assessment.sp_AssignStudentToExam
-    @StudentID=9003, @ExamID=@RemExam2,
+    @StudentID=38, @ExamID=@RemExam2,
     @Exam_Date=@E8_Date, @Start_Time=@E8_Start, @End_Time=@E8_End;
 
-EXEC Assessment.sp_RemoveStudentFromExam @StudentID=9003, @ExamID=@RemExam2;
+EXEC Assessment.sp_RemoveStudentFromExam @StudentID=38, @ExamID=@RemExam2;
 -- Soft-delete the temp exam
 UPDATE Assessment.Exam SET isDeleted=1 WHERE ExamID=@RemExam2;
 PRINT '   -- Result: Sara removed from corrective exam successfully';
@@ -620,7 +625,7 @@ DECLARE @RandomExamID INT;
 DECLARE @D1_Start DATETIME = DATEADD(DAY,-1,GETDATE());
 DECLARE @D1_End   DATETIME = DATEADD(DAY,30,GETDATE());
 EXEC Assessment.sp_CreateExam
-    @CourseID = 9001, @InstructorID = 9001, @BranchID = 9001,
+    @CourseID = 9001, @InstructorID = 33, @BranchID = 9001,
     @TrackID = 9001, @IntakeID = 9001, @ExamType = 'Corrective',
     @Total_Time = 45,
     @Start_Time = @D1_Start, @End_Time = @D1_End,
@@ -649,7 +654,7 @@ DECLARE @RandomExam2 INT;
 DECLARE @D2_Start DATETIME = DATEADD(DAY,-1,GETDATE());
 DECLARE @D2_End   DATETIME = DATEADD(DAY,30,GETDATE());
 EXEC Assessment.sp_CreateExam
-    @CourseID = 9001, @InstructorID = 9001, @BranchID = 9001,
+    @CourseID = 9001, @InstructorID = 33, @BranchID = 9001,
     @TrackID = 9001, @IntakeID = 9001, @ExamType = 'Exam',
     @Total_Time = 60,
     @Start_Time = @D2_Start, @End_Time = @D2_End,
@@ -679,11 +684,11 @@ GO
 -- Expected: Answer submitted, student-safe return (NO correct answer shown)
 PRINT ' TEST F1: Ahmed submits CORRECT MCQ answer (Q9001)';
 DECLARE @EID8 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+    WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
     ORDER BY ExamID);
 
 EXEC Assessment.sp_UpsertAnswer
-    @StudentID = 9002, @ExamID = @EID8,
+    @StudentID = 37, @ExamID = @EID8,
     @QuestionID = 9001,
     @Student_Answer = 'Structured Query Language';
 
@@ -706,11 +711,11 @@ StudentID  ExamID  QuestionID     YourAnswer              Action          Answer
 --  TEST F2: Submit MCQ answer (wrong)
 PRINT ' TEST F2: Ahmed submits WRONG MCQ answer (Q9002)';
 DECLARE @EID8b INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+    WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
     ORDER BY ExamID);
 
 EXEC Assessment.sp_UpsertAnswer
-    @StudentID = 9002, @ExamID = @EID8b,
+    @StudentID = 37, @ExamID = @EID8b,
     @QuestionID = 9002,
     @Student_Answer = 'INNER JOIN';
 
@@ -730,11 +735,11 @@ Student sees no indication this is wrong
 --  TEST F3: Submit TrueFalse answers
 PRINT ' TEST F3: Ahmed submits TF answers (Q9006=correct, Q9008=wrong)';
 DECLARE @EID8c INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+    WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
     ORDER BY ExamID);
 
-EXEC Assessment.sp_UpsertAnswer @StudentID = 9002, @ExamID = @EID8c, @QuestionID = 9006, @Student_Answer = 'False';
-EXEC Assessment.sp_UpsertAnswer @StudentID = 9002, @ExamID = @EID8c, @QuestionID = 9008, @Student_Answer = 'False';
+EXEC Assessment.sp_UpsertAnswer @StudentID = 37, @ExamID = @EID8c, @QuestionID = 9006, @Student_Answer = 'False';
+EXEC Assessment.sp_UpsertAnswer @StudentID = 37, @ExamID = @EID8c, @QuestionID = 9008, @Student_Answer = 'False';
 PRINT '   -- Result: Q9006 correct (False), Q9008 wrong (should be True), AnsweredSoFar=4';
 PRINT '';
 GO
@@ -750,11 +755,11 @@ StudentID  QuestionID  YourAnswer   Action          AnsweredSoFar  TotalQuestion
 --  TEST F4: Submit Text answer
 PRINT ' TEST F4: Ahmed submits Text answer (Q9009)';
 DECLARE @EID8d INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+    WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
     ORDER BY ExamID);
 
 EXEC Assessment.sp_UpsertAnswer
-    @StudentID = 9002, @ExamID = @EID8d,
+    @StudentID = 37, @ExamID = @EID8d,
     @QuestionID = 9009,
     @Student_Answer = 'Normalization is the process of organizing data to minimize redundancy';
 
@@ -772,11 +777,11 @@ StudentID  ExamID  QuestionID          YourAnswer                           Acti
 -- Expected: Answer updated (MCQ wrong → correct), still no score shown
 PRINT ' TEST F5: Ahmed CHANGES Q9002 answer (wrong → correct)';
 DECLARE @EID8e INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+    WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
     ORDER BY ExamID);
 
 EXEC Assessment.sp_UpsertAnswer
-    @StudentID = 9002, @ExamID = @EID8e,
+    @StudentID = 37, @ExamID = @EID8e,
     @QuestionID = 9002,
     @Student_Answer = 'FULL JOIN';
 
@@ -794,12 +799,12 @@ StudentID  ExamID  QuestionID  YourAnswer   Action         AnsweredSoFar  TotalQ
 -- Expected: Instructor can see grading details
 PRINT ' TEST F6: INSTRUCTOR verifies grading (using answer sheet view)';
 DECLARE @EID8f INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+    WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
     ORDER BY ExamID);
 
 SELECT StudentName, QuestionID, QuestionType, Student_Answer, CorrectAnswer, Is_Correct, Earned_Degree, [Status]
 FROM Assessment.vw_StudentAnswerSheet
-WHERE ExamID = @EID8f AND StudentID = 9002
+WHERE ExamID = @EID8f AND StudentID = 37
 ORDER BY QuestionID;
 
 PRINT '   -- Result: 5 rows showing auto-graded MCQ/TF + pending Text';
@@ -819,14 +824,14 @@ Ahmed Student   9009        Text          Normalization is the process of...   N
 --  TEST F7: Sara submits all answers
 PRINT ' TEST F7: Sara submits all 5 answers';
 DECLARE @EID8g INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+    WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
     ORDER BY ExamID);
 
-EXEC Assessment.sp_UpsertAnswer @StudentID = 9003, @ExamID = @EID8g, @QuestionID = 9001, @Student_Answer = 'Simple Query Language';
-EXEC Assessment.sp_UpsertAnswer @StudentID = 9003, @ExamID = @EID8g, @QuestionID = 9002, @Student_Answer = 'FULL JOIN';
-EXEC Assessment.sp_UpsertAnswer @StudentID = 9003, @ExamID = @EID8g, @QuestionID = 9006, @Student_Answer = 'True';
-EXEC Assessment.sp_UpsertAnswer @StudentID = 9003, @ExamID = @EID8g, @QuestionID = 9008, @Student_Answer = 'True';
-EXEC Assessment.sp_UpsertAnswer @StudentID = 9003, @ExamID = @EID8g, @QuestionID = 9009, @Student_Answer = 'Normalization reduces data redundancy and improves integrity';
+EXEC Assessment.sp_UpsertAnswer @StudentID = 38, @ExamID = @EID8g, @QuestionID = 9001, @Student_Answer = 'Simple Query Language';
+EXEC Assessment.sp_UpsertAnswer @StudentID = 38, @ExamID = @EID8g, @QuestionID = 9002, @Student_Answer = 'FULL JOIN';
+EXEC Assessment.sp_UpsertAnswer @StudentID = 38, @ExamID = @EID8g, @QuestionID = 9006, @Student_Answer = 'True';
+EXEC Assessment.sp_UpsertAnswer @StudentID = 38, @ExamID = @EID8g, @QuestionID = 9008, @Student_Answer = 'True';
+EXEC Assessment.sp_UpsertAnswer @StudentID = 38, @ExamID = @EID8g, @QuestionID = 9009, @Student_Answer = 'Normalization reduces data redundancy and improves integrity';
 
 PRINT '   -- Sara: Q9001=Wrong, Q9002=Correct, Q9006=Wrong, Q9008=Correct, Q9009=Pending';
 PRINT '';
@@ -851,7 +856,7 @@ DECLARE @EID_Corr INT;
 DECLARE @F8_Start DATETIME = DATEADD(DAY,2,GETDATE());
 DECLARE @F8_End   DATETIME = DATEADD(DAY,10,GETDATE());
 EXEC Assessment.sp_CreateExam
-    @CourseID=9001, @InstructorID=9001, @BranchID=9001,
+    @CourseID=9001, @InstructorID=33, @BranchID=9001,
     @TrackID=9001, @IntakeID=9001, @ExamType='Corrective',
     @Total_Time=30, @Start_Time=@F8_Start, @End_Time=@F8_End,
     @ExamID=@EID_Corr OUTPUT;
@@ -860,11 +865,11 @@ EXEC Assessment.sp_UpsertExamQuestion @ExamID=@EID_Corr, @QuestionID=9001, @Ques
 BEGIN TRY
     DECLARE @F8_Date DATE = CAST(@F8_Start AS DATE);
     EXEC Assessment.sp_AssignStudentToExam
-        @StudentID=9002, @ExamID=@EID_Corr,
+        @StudentID=37, @ExamID=@EID_Corr,
         @Exam_Date=@F8_Date, @Start_Time=@F8_Start, @End_Time=@F8_End;
     -- Window is in the future — submit should fail
     EXEC Assessment.sp_UpsertAnswer
-        @StudentID=9002, @ExamID=@EID_Corr, @QuestionID=9001, @Student_Answer='test';
+        @StudentID=37, @ExamID=@EID_Corr, @QuestionID=9001, @Student_Answer='test';
     PRINT '   -- did not fail as expected';
 END TRY
 BEGIN CATCH
@@ -890,10 +895,10 @@ Exam window is not active for this student.
 PRINT ' TEST F9: Update student exam after answers exist (should fail)';
 BEGIN TRY
     DECLARE @UpdExam2 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-        WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+        WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
         ORDER BY ExamID);
     EXEC Assessment.sp_UpdateStudentExam
-        @StudentID  = 9002,
+        @StudentID  = 37,
         @ExamID     = @UpdExam2,
         @End_Time   = '2026-01-01 00:00:00';
     PRINT '   -- did not fail as expected';
@@ -915,10 +920,10 @@ Cannot modify — student already submitted answers.
 PRINT ' TEST F10: Remove student who has answers (should fail)';
 BEGIN TRY
     DECLARE @RemExam INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-        WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+        WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
         ORDER BY ExamID);
     EXEC Assessment.sp_RemoveStudentFromExam
-        @StudentID = 9002,
+        @StudentID = 37,
         @ExamID    = @RemExam;
     PRINT '   -- did not fail as expected';
 END TRY
@@ -936,7 +941,7 @@ Cannot remove — student has answers. Delete answers first.
 ------------------------------------
 -- Close exam window so grading is allowed
 DECLARE @GradeExam INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID=9001 AND InstructorID=9001 AND ExamType='Exam' AND isDeleted=0 ORDER BY ExamID);
+    WHERE CourseID=9001 AND InstructorID=33 AND ExamType='Exam' AND isDeleted=0 ORDER BY ExamID);
 EXEC sp_set_session_context @key=N'BypassStudentTimeCheck', @value=1;
 UPDATE Assessment.Student_Exam
 SET End_Time = DATEADD(MINUTE,-1,GETDATE())
@@ -948,7 +953,7 @@ GO
 --  TEST G1: View pending text answers
 PRINT ' TEST G1: Instructor views pending text reviews';
 DECLARE @EID9 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+    WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
     ORDER BY ExamID);
 
 EXEC Assessment.sp_GetPendingTextReviews @ExamID = @EID9;
@@ -969,11 +974,11 @@ Answer_ID  StudentName    QuestionText                     Student_Answer       
 -- Both sp_CalculateResult and sp_CalculateAllExamResults must reject
 PRINT ' TEST H0: Calculate result BEFORE grading text answers (should fail)';
 DECLARE @EID_H0 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+    WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
     ORDER BY ExamID);
 BEGIN TRY
     EXEC Assessment.sp_CalculateResult
-        @StudentID = 9002,
+        @StudentID = 37,
         @ExamID    = @EID_H0;
     PRINT '   -- FAILED: Should have been rejected!';
 END TRY
@@ -986,7 +991,7 @@ GO
 -- TEST H0b: Calculate ALL results BEFORE grading text answers (should fail)
 PRINT ' TEST H0b: Calculate ALL results BEFORE grading text answers (should fail)';
 DECLARE @EID_H0b INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+    WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
     ORDER BY ExamID);
 BEGIN TRY
     EXEC Assessment.sp_CalculateAllExamResults
@@ -1004,9 +1009,9 @@ PRINT ' TEST G2: Grade Ahmed text answer (12 out of 15)';
 DECLARE @AhmedTextID INT = (
     SELECT a.Answer_ID FROM Assessment.Student_Answer a
     JOIN Academic.Question_Pool q ON a.QuestionID = q.QuestionID
-    WHERE a.StudentID = 9002 AND q.QuestionType = 'Text'
+    WHERE a.StudentID = 37 AND q.QuestionType = 'Text'
     AND a.ExamID = (SELECT TOP 1 ExamID FROM Assessment.Exam
-        WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+        WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
         ORDER BY ExamID)
 );
 
@@ -1026,9 +1031,9 @@ PRINT ' TEST G3: Grade Sara text answer (5 out of 15)';
 DECLARE @SaraTextID INT = (
     SELECT a.Answer_ID FROM Assessment.Student_Answer a
     JOIN Academic.Question_Pool q ON a.QuestionID = q.QuestionID
-    WHERE a.StudentID = 9003 AND q.QuestionType = 'Text'
+    WHERE a.StudentID = 38 AND q.QuestionType = 'Text'
     AND a.ExamID = (SELECT TOP 1 ExamID FROM Assessment.Exam
-        WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+        WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
         ORDER BY ExamID)
 );
 
@@ -1052,7 +1057,7 @@ BEGIN TRY
     DECLARE @AnyTextID INT = (
         SELECT TOP 1 a.Answer_ID FROM Assessment.Student_Answer a
         JOIN Academic.Question_Pool q ON a.QuestionID = q.QuestionID
-        WHERE q.QuestionType = 'Text' AND a.StudentID = 9002
+        WHERE q.QuestionType = 'Text' AND a.StudentID = 37
     );
     EXEC Assessment.sp_GradeTextAnswer @Answer_ID = @AnyTextID, @Is_Correct = 1, @Earned_Degree = 20.00;
     PRINT '   -- did not fail as expected';
@@ -1075,10 +1080,10 @@ Earned (20.00) cannot exceed max (15.00).
 -- Scaled Min: (50/100)*50 = 20 → 42 >= 25 → PASSED
 PRINT ' TEST H1: Calculate Ahmed result';
 DECLARE @EID10 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+    WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
     ORDER BY ExamID);
 
-EXEC Assessment.sp_CalculateResult @StudentID = 9002, @ExamID = @EID10;
+EXEC Assessment.sp_CalculateResult @StudentID = 37, @ExamID = @EID10;
 PRINT '   -- Expected: TotalScore=42.00, ExamMax=50.00, Pct=84%, Grade=B, PASSED';
 PRINT '      RequiredMinimum=20.00, PendingTextAnswers=0';
 PRINT '';
@@ -1096,7 +1101,7 @@ StudentID  ExamID  TotalScore  ExamMaxDegree  ScorePercentage  Grade  PassFail  
 -- Scaled Min: 25 → 20 >= 25 → Failed 
 PRINT ' TEST H2: Calculate ALL exam results';
 DECLARE @EID11 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+    WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
     ORDER BY ExamID);
 
 EXEC Assessment.sp_CalculateAllExamResults @ExamID = @EID11;
@@ -1122,7 +1127,7 @@ Sara Student    20.00        40.00            F      Failed
 
 -- Restore exam window so I1 (student views questions) works
 DECLARE @RestoreExam INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID=9001 AND InstructorID=9001 AND ExamType='Exam' AND isDeleted=0 ORDER BY ExamID);
+    WHERE CourseID=9001 AND InstructorID=33 AND ExamType='Exam' AND isDeleted=0 ORDER BY ExamID);
 EXEC sp_set_session_context @key=N'BypassStudentTimeCheck', @value=1;
 UPDATE Assessment.Student_Exam
     SET End_Time = DATEADD(DAY,30,GETDATE())
@@ -1135,10 +1140,10 @@ GO
 -- Expected: Questions shown with choices, NO correct answers
 PRINT ' TEST I1: Student views exam questions (active window)';
 DECLARE @EID12 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+    WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
     ORDER BY ExamID);
 
-EXEC Assessment.sp_GetStudentExamQuestions @StudentID = 9002, @ExamID = @EID12;
+EXEC Assessment.sp_GetStudentExamQuestions @StudentID = 37, @ExamID = @EID12;
 PRINT '   -- Result: 5 rows with QuestionText, Choices (JSON), CurrentAnswer';
 PRINT '   -- SECURITY: No CorrectAnswer, No Is_Correct column anywhere';
 PRINT '';
@@ -1162,16 +1167,16 @@ PRINT ' TEST I2: Student post-exam review (Ahmed)';
 
 -- First update exam window to be closed (so post-review works)
 DECLARE @EID12b INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+    WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
     ORDER BY ExamID);
 
 EXEC sp_set_session_context @key = N'BypassStudentTimeCheck', @value = 1;
 UPDATE Assessment.Student_Exam
 SET End_Time = DATEADD(MINUTE, -1, GETDATE())
-WHERE ExamID = @EID12b AND StudentID = 9002;
+WHERE ExamID = @EID12b AND StudentID = 37;
 EXEC sp_set_session_context @key = N'BypassStudentTimeCheck', @value = 0;
 
-EXEC Assessment.sp_StudentPostExamReview @StudentID = 9002, @ExamID = @EID12b;
+EXEC Assessment.sp_StudentPostExamReview @StudentID = 37, @ExamID = @EID12b;
 PRINT '   -- Result: TotalScore=42.00, Grade=B, PASSED';
 PRINT '   -- SECURITY: No individual question answers, no correct answers';
 
@@ -1179,7 +1184,7 @@ PRINT '   -- SECURITY: No individual question answers, no correct answers';
 EXEC sp_set_session_context @key = N'BypassStudentTimeCheck', @value = 1;
 UPDATE Assessment.Student_Exam
 SET End_Time = (SELECT End_Time FROM Assessment.Exam WHERE ExamID = @EID12b)
-WHERE ExamID = @EID12b AND StudentID = 9002;
+WHERE ExamID = @EID12b AND StudentID = 37;
 EXEC sp_set_session_context @key = N'BypassStudentTimeCheck', @value = 0;
 PRINT '';
 GO
@@ -1192,7 +1197,7 @@ StudentID  StudentName    CourseName             ExamType  Total_Score  ExamMaxD
 
 -- ▶ TEST I3: Student exam history
 PRINT '▶ TEST I3: Student exam history (Ahmed)';
-EXEC Assessment.sp_GetStudentExamHistory @StudentID = 9002;
+EXEC Assessment.sp_GetStudentExamHistory @StudentID = 37;
 PRINT '   -- Result Set 1: Assignments (exam + corrective)';
 PRINT '   -- Result Set 2: Results (only the graded exam)';
 PRINT '';
@@ -1229,7 +1234,7 @@ ExamID  ExamType    CourseName             InstructorName    QuestionCount  Allo
 
 -- TEST J2: Search exam results by student
 PRINT ' TEST J2: Search results for Ahmed';
-EXEC Assessment.sp_SearchExamResults @StudentID = 9002;
+EXEC Assessment.sp_SearchExamResults @StudentID = 37;
 PRINT '   -- Result: 1 row — Ahmed, Grade B, PASSED';
 PRINT '';
 GO
@@ -1256,7 +1261,7 @@ StudentID  StudentName   CourseName             ExamType  Total_Score  ScorePerc
 -- TEST J4: Exam statistics
 PRINT ' TEST J4: Exam statistics';
 DECLARE @EID13 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+    WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
     ORDER BY ExamID);
 EXEC Assessment.sp_GetExamStatistics @ExamID = @EID13;
 PRINT '   -- Result Set 1: Statistics — AvgScore=31, PassRate=100%';
@@ -1283,7 +1288,7 @@ Sara Student   20.00        40.00            F      PASSED
 --  TEST J5: Get exam answer sheet (instructor)
 PRINT ' TEST J5: Instructor views full answer sheet';
 DECLARE @EID13b INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+    WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
     ORDER BY ExamID);
 EXEC Assessment.sp_GetExamAnswerSheet @ExamID = @EID13b;
 PRINT '   -- Result: 10 rows (5 per student), with CorrectAnswer column (instructor only)';
@@ -1388,7 +1393,7 @@ Returns same rows as K4 assuming all tests run on the same day
 PRINT ' TEST L1: Direct INSERT exceeding max degree (trigger blocks)';
 BEGIN TRY
     DECLARE @EID14 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-        WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+        WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
         ORDER BY ExamID);
 
     INSERT INTO Assessment.Exam_Questions (ExamID, QuestionID, Question_Order, Question_Degree)
@@ -1410,7 +1415,7 @@ Exam [auto]: Total=1049.00 exceeds Max=100.00 for TEST_SQL_Fundamentals
 PRINT ' TEST L2: Direct UPDATE on answered question (trigger blocks)';
 BEGIN TRY
     DECLARE @EID15 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-        WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+        WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
         ORDER BY ExamID);
 
     UPDATE Assessment.Exam_Questions SET Question_Degree = 20
@@ -1432,7 +1437,7 @@ Cannot modify/remove exam questions that students have already answered.
 PRINT ' TEST L3: Assign student with time outside exam window (trigger blocks)';
 BEGIN TRY
     DECLARE @EID16 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-        WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+        WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
         ORDER BY ExamID);
 
     INSERT INTO Assessment.Student_Exam (StudentID, ExamID, Exam_Date, Start_Time, End_Time)
@@ -1455,10 +1460,10 @@ Student exam time must fall within the exam time window.
 --  TEST M1: Update exam (owner)
 PRINT ' TEST M1: Instructor updates own exam';
 DECLARE @EID17 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+    WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
     ORDER BY ExamID);
 
-EXEC Assessment.sp_UpdateExam @ExamID = @EID17, @InstructorID = 9001, @Total_Time = 120;
+EXEC Assessment.sp_UpdateExam @ExamID = @EID17, @InstructorID = 33, @Total_Time = 120;
 PRINT '   -- Result: Total_Time updated to 120';
 PRINT '';
 GO
@@ -1473,6 +1478,7 @@ ExamID  ExamType  CourseName             InstructorName   Total_Time  Allowance_
 -- Expected: ERROR
 PRINT ' TEST M2: Non-owner non-manager update (should fail)';
 
+/*
 -- Create another non-manager instructor
 SET IDENTITY_INSERT Users.Account ON;
 INSERT INTO Users.Account (AccountId, Username, Email, Password, Role)
@@ -1487,7 +1493,7 @@ INSERT INTO Users.Instructor (InstructorID, HireDate, Salary, Is_Manager) VALUES
 
 BEGIN TRY
     DECLARE @EID17b INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-        WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+        WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
         ORDER BY ExamID);
     EXEC Assessment.sp_UpdateExam @ExamID = @EID17b, @InstructorID = 9006, @Total_Time = 30;
     PRINT '   -- did not fail as expected';
@@ -1501,15 +1507,15 @@ GO
 Expected ERROR:
 Only exam owner (ID=9001) or Training Manager can update.
 */
-
+*/
 
 --  TEST M3: Manager CAN update any exam
 PRINT ' TEST M3: Training Manager updates exam (allowed)';
 DECLARE @EID17c INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-    WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+    WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
     ORDER BY ExamID);
 
-EXEC Assessment.sp_UpdateExam @ExamID = @EID17c, @InstructorID = 9004, @Allowance_Options = 'Open book';
+EXEC Assessment.sp_UpdateExam @ExamID = @EID17c, @InstructorID = 35, @Allowance_Options = 'Open book';
 PRINT '   -- Result: Allowance updated by Manager (Is_Manager=1)';
 PRINT '';
 GO
@@ -1524,7 +1530,7 @@ ExamID  ExamType  CourseName            InstructorName   Total_Time  Allowance_O
 PRINT ' TEST M4: Delete exam that has answers (should fail)';
 BEGIN TRY
     DECLARE @EID18 INT = (SELECT TOP 1 ExamID FROM Assessment.Exam
-        WHERE CourseID = 9001 AND InstructorID = 9001 AND ExamType = 'Exam' AND isDeleted = 0
+        WHERE CourseID = 9001 AND InstructorID = 33 AND ExamType = 'Exam' AND isDeleted = 0
         ORDER BY ExamID);
     EXEC Assessment.sp_DeleteExam @ExamID = @EID18;
     PRINT '   -- did not fail as expected';

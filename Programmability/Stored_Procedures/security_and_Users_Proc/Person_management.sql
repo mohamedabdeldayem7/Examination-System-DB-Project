@@ -33,7 +33,7 @@ BEGIN
     END
 
     -- validate SSN format 
-    IF LEN(@SSN) <> 14 OR @SSN IS NULL
+    IF LEN(@SSN) <> 14 AND @SSN IS NOT NULL
     BEGIN
         RAISERROR('Invalid SSN format.', 16, 1);
         RETURN;

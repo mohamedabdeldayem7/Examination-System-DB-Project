@@ -182,7 +182,7 @@ BEGIN
             'Org',
             'Track',
             'UPDATE',
-            'TrackID ' + CAST(i.TrackId AS NVARCHAR(50)),
+             I.TrackId,
             'Updated Track From [Name=' + ISNULL(d.TrackName,'') +
             ', DeptID=' + ISNULL(CAST(d.DepartmentId AS NVARCHAR(50)),'NULL') +
             '] To [Name=' + ISNULL(i.TrackName,'') +
@@ -204,7 +204,7 @@ BEGIN
             'Org',
             'Track',
             'DELETE',
-            'TrackID ' + CAST(d.TrackId AS NVARCHAR(50)),
+             d.TrackId,
             'Deleted Track: Name = ' + ISNULL(d.TrackName,'') +
             ', DepartmentID = ' + ISNULL(CAST(d.DepartmentId AS NVARCHAR(50)),'NULL')
         FROM deleted d;

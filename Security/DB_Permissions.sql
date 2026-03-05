@@ -4,6 +4,12 @@ GO
 -- Grant permissions to database roles
 
 ----------------INSTRUCTOR -------
+-- Users
+GRANT EXECUTE ON Users.usp_ChangePassword				 TO db_Instructor;
+GRANT EXECUTE ON Users.usp_GetInstructor				 TO db_Instructor;
+GRANT EXECUTE ON Users.usp_UpdateProfile				 TO db_Instructor;
+
+
 -- Assessment
 GRANT EXECUTE ON Assessment.sp_CreateExam                TO db_Instructor;
 GRANT EXECUTE ON Assessment.sp_ReadExam                  TO db_Instructor;
@@ -36,9 +42,24 @@ GRANT SELECT  ON Assessment.vw_TextAnswersForReview      TO db_Instructor;
 GRANT SELECT  ON Assessment.vw_StudentExamResults        TO db_Instructor;
 GRANT SELECT  ON Assessment.vw_ExamStatistics            TO db_Instructor;
 GRANT SELECT  ON Assessment.vw_AuditLog                  TO db_Instructor;
+ 
+-- Academic
+GRANT EXECUTE ON Academic.sp_AddQuestionWithChoices     TO db_Instructor;
+GRANT EXECUTE ON Academic.sp_UpdateQuestion			    TO db_Instructor;
+GRANT EXECUTE ON Academic.sp_DeleteQuestion			    TO db_Instructor;
+GRANT SELECT  ON V_Academic_Course_Instructor           TO db_Instructor;
+GRANT SELECT  ON V_Academic_Course			            TO db_Instructor;
+
 
 ------STUDENT -------
 -- Student: limited read via views and execute allowed SPs
+
+-- Users
+GRANT EXECUTE ON Users.usp_ChangePassword				 TO db_Student;
+GRANT EXECUTE ON Users.usp_UpdateProfile				 TO db_Student;
+GRANT EXECUTE ON Users.usp_GetStudent					 TO db_Student;
+
+
 -- Assessment
 -- NO access to: vw_StudentAnswerSheet, vw_TextAnswersForReview,
 --               vw_ExamQuestionsDetail, vw_AuditLog
@@ -59,8 +80,31 @@ GRANT SELECT  ON Assessment.vw_StudentExamResults        TO db_Student;
 ALTER ROLE db_Instructor ADD MEMBER db_TrainingManager; -- each Training Manager is also an Instructor, so they can execute all Instructor SPs
 GO
 
+
+-- Users
+GRANT EXECUTE ON Users.usp_ListAccountsByRole				 TO db_Instructor;
+GRANT EXECUTE ON Users.usp_RegisterInstructor				 TO db_Instructor;
+GRANT EXECUTE ON Users.usp_UpdateInstructor				 TO db_Instructor;
+GRANT EXECUTE ON Users.usp_DeleteInstructor				 TO db_Instructor;
+GRANT EXECUTE ON Users.usp_RegisterStudent				 TO db_Instructor;
+GRANT EXECUTE ON Users.usp_UpdateStudent				 TO db_Instructor;
+GRANT EXECUTE ON Users.usp_DeleteStudent				 TO db_Instructor;
+GRANT EXECUTE ON Users.usp_GetStudent				 TO db_Instructor;
+GRANT SELECT  ON Users.vw_StudentDetails                  TO db_TrainingManager;
+GRANT SELECT  ON Users.vw_InstructorDetails                TO db_TrainingManager;
+GRANT SELECT  ON Users.vw_ActiveContactList               TO db_TrainingManager;
+
+
 -- Org
 GRANT EXECUTE ON SCHEMA::ORG TO db_TrainingManager
+GRANT SELECT  ON V_Org_Branch               TO db_TrainingManager;
+GRANT SELECT  ON V_Org_Track               TO db_TrainingManager;
+GRANT SELECT  ON V_Org_Intake               TO db_TrainingManager;
+GRANT SELECT  ON V_Org_Department               TO db_TrainingManager;
+
+
+-- Academic
+GRANT EXECUTE ON SCHEMA::Academic TO db_TrainingManager
 
  -- Assessment
 GRANT EXECUTE ON Assessment.sp_UpdateExam                TO db_TrainingManager;
