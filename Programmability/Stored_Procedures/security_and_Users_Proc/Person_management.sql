@@ -174,3 +174,78 @@ BEGIN
     END CATCH
 END;
 GO
+
+
+-- Delete Person Procedure
+CREATE OR ALTER PROCEDURE Users.usp_DeletePerson
+(
+    @PersonId INT = NULL,
+    @Username NVARCHAR(100) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Authorization: require admin or training manager
+    IF IS_ROLEMEMBER('db_Admin') <> 1 AND IS_ROLEMEMBER('db_TrainingManager') <> 1
+    BEGIN
+        RAISERROR('Permission denied. Admin or TrainingManager required.',16,1); RETURN;
+    END;
+
+    IF @PersonId IS NULL AND @Username IS NULL
+    BEGIN
+        RAISERROR('Provide either ID or Username.',16,1); RETURN;
+    END;
+
+    DECLARE @ResolvedPersonId INT, @AccountId INT, @ResolvedUsername NVARCHAR(100);
+
+    SELECT TOP (1)
+        @ResolvedPersonId = P.PersonId,
+        @AccountId = P.AccountId,
+        @ResolvedUsername = A.Username
+    FROM Users.Person AS P
+        LEFT JOIN Users.Account AS A ON A.AccountId = P.AccountId
+    WHERE (P.PersonId = @PersonId OR @PersonId IS NULL)
+      AND (A.Username = @Username OR @Username IS NULL)
+      AND P.IsDeleted = 0;
+
+    IF @ResolvedPersonId IS NULL
+    BEGIN
+        RAISERROR('Account not found or already deleted.',16,1); RETURN;
+    END;
+
+    -- Prevent self deletion
+    DECLARE @CallerAccountId INT;
+    SELECT @CallerAccountId = AccountId FROM Users.Account 
+    WHERE Username = SUSER_NAME();
+
+    IF @CallerAccountId IS NOT NULL AND @CallerAccountId = @AccountId
+    BEGIN
+        RAISERROR('Action denied: You cannot delete your own account.',16,1); 
+        RETURN;
+    END;
+
+    BEGIN TRY
+        BEGIN TRAN;
+
+        -- Soft-delete the person
+        UPDATE Users.Person
+            SET IsDeleted = 1
+        WHERE PersonId = @ResolvedPersonId;
+
+        -- Delegate account deletion (soft-delete + optional DB user drop)
+        IF @AccountId IS NOT NULL
+        BEGIN
+            EXEC Users.usp_DeleteAccount @TargetAccountId = @AccountId, @TargetUsername = @ResolvedUsername;
+        END;
+
+        COMMIT TRAN;
+
+        SELECT 1 AS Success, @ResolvedPersonId AS DeletedPersonId, @ResolvedUsername AS DeletedUsername;
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() <> 0 ROLLBACK TRAN;
+        DECLARE @ErrorMessage NVARCHAR(4000) = ERROR_MESSAGE();
+        RAISERROR('Failed: %s',16,1,@ErrorMessage);
+    END CATCH
+END;

@@ -163,4 +163,44 @@ BEGIN
 END;
 GO
 
+-- Delete Student
+CREATE OR ALTER PROCEDURE Users.usp_DeleteStudent
+(
+    @StudentId INT = NULL,
+    @Username NVARCHAR(100) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
 
+    IF IS_ROLEMEMBER('db_Admin') <> 1 AND IS_ROLEMEMBER('db_TrainingManager') <> 1
+    BEGIN
+        RAISERROR('Permission denied. Admin or TrainingManager required.',16,1); RETURN;
+    END;
+
+    IF @StudentId IS NULL AND @Username IS NULL
+    BEGIN
+        RAISERROR('Provide either StudentId or Username.',16,1); RETURN;
+    END;
+
+    DECLARE @ResolvedPersonId INT;
+    DECLARE @ResolvedUsername NVARCHAR(100);
+
+    SELECT TOP (1)
+        @ResolvedPersonId = P.PersonId,
+        @ResolvedUsername = A.Username
+    FROM Users.Student AS S
+        JOIN Users.Person AS P ON S.StudentID = P.PersonId
+        LEFT JOIN Users.Account AS A ON A.AccountId = P.AccountId
+    WHERE (S.StudentID = @StudentId OR @StudentId IS NULL)
+      AND (A.Username = @Username OR @Username IS NULL)
+      AND P.IsDeleted = 0;
+
+    IF @ResolvedPersonId IS NULL
+    BEGIN
+        RAISERROR('Student not found or already deleted.',16,1); RETURN;
+    END;
+
+    EXEC Users.usp_DeletePerson @PersonId = @ResolvedPersonId, @Username = @ResolvedUsername;
+END;
+GO

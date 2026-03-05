@@ -188,5 +188,47 @@ BEGIN
 
     END CATCH
 END;
+GO
 
--- 
+
+-- Delete Instructor: deletes from Users.Person (which will cascade to Instructor and Account); accepts either InstructorId or Username; checks permissions; uses the same underlying procedure as deleting any person to ensure consistent handling of related data and audit logging
+CREATE OR ALTER PROCEDURE Users.usp_DeleteInstructor
+(
+    @InstructorId INT = NULL,
+    @Username NVARCHAR(100) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF IS_ROLEMEMBER('db_Admin') <> 1 AND IS_ROLEMEMBER('db_TrainingManager') <> 1
+    BEGIN
+        RAISERROR('Permission denied. Admin or TrainingManager required.',16,1); RETURN;
+    END;
+
+    IF @InstructorId IS NULL AND @Username IS NULL
+    BEGIN
+        RAISERROR('Provide either InstructorId or Username.',16,1); RETURN;
+    END;
+
+    DECLARE @ResolvedPersonId INT;
+    DECLARE @ResolvedUsername NVARCHAR(100);
+
+    SELECT TOP (1)
+        @ResolvedPersonId = P.PersonId,
+        @ResolvedUsername = A.Username
+    FROM Users.Instructor AS I
+        JOIN Users.Person AS P ON I.InstructorID = P.PersonId
+        LEFT JOIN Users.Account AS A ON A.AccountId = P.AccountId
+    WHERE (I.InstructorID = @InstructorId OR @InstructorId IS NULL)
+      AND (A.Username = @Username OR @Username IS NULL)
+      AND P.IsDeleted = 0;
+
+    IF @ResolvedPersonId IS NULL
+    BEGIN
+        RAISERROR('Instructor not found or already deleted.',16,1); RETURN;
+    END;
+
+    EXEC Users.usp_DeletePerson @PersonId = @ResolvedPersonId, @Username = @ResolvedUsername;
+END;
+GO
