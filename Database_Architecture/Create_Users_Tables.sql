@@ -1,4 +1,4 @@
-USE ExamSystemDB
+﻿USE ExamSystemDB
 GO
 
 DROP TABLE IF EXISTS [Users].[Student]
@@ -49,6 +49,12 @@ CREATE TABLE Users.Person (
 ) ON FG_MasterData;
 GO
 
+
+-- alter Person table to add unique constraints on Phone and SSN
+ALTER TABLE Users.Person
+ADD CONSTRAINT UQ_Person_Phone UNIQUE (Phone),
+    CONSTRAINT UQ_Person_SSN UNIQUE (SSN);
+GO
 --Users.Student 
 CREATE TABLE Users.Student 
 ( 
