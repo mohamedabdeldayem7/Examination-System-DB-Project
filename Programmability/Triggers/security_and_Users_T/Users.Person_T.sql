@@ -32,28 +32,36 @@ BEGIN
 END;
 GO
 
--- DELETE Trigger (Cascading to Account)
-CREATE OR ALTER TRIGGER Users.trg_Person_Delete
-ON Users.Person 
+-- INSTEAD OF DELETE triggers (prevent physical deletes; route to stored procedures)
+CREATE OR ALTER TRIGGER Users.trg_Person_INSTEAD_OF_DELETE
+ON Users.Person
 INSTEAD OF DELETE
 AS
 BEGIN
     SET NOCOUNT ON;
-    DECLARE @PId INT, @AccId INT;
-    DECLARE delete_cursor CURSOR FOR SELECT PersonId, AccountId FROM deleted;
 
-    OPEN delete_cursor;
-    FETCH NEXT FROM delete_cursor INTO @PId, @AccId;
+    DECLARE @PersonId INT;
+    DECLARE @Username NVARCHAR(100);
+
+    DECLARE del_cursor CURSOR LOCAL FAST_FORWARD FOR
+    SELECT d.PersonId, a.Username
+    FROM deleted AS d
+        LEFT JOIN Users.Account AS a ON a.AccountId = d.AccountId;
+
+    OPEN del_cursor;
+    FETCH NEXT FROM del_cursor INTO @PersonId, @Username;
     WHILE @@FETCH_STATUS = 0
     BEGIN
-
-        EXEC Users.usp_DeleteAccount @TargetAccountId = @AccId;
-        
-        DECLARE @vals NVARCHAR(MAX);
-        SELECT @vals = CONCAT('PersonId=', @PId, '; AccountId=', @AccId, '; Deleted');
-        EXEC Ops.usp_LogAudit @SchemaName = 'Users', @TableName = 'Person', @Operation = 'DELETE', @KeyValue = @PId, @Values = 'Person entry processed via Account Delete logic';
-        FETCH NEXT FROM delete_cursor INTO @PId, @AccId;
-    END;
-    CLOSE delete_cursor; DEALLOCATE delete_cursor;
+        BEGIN TRY
+            EXEC Users.usp_DeletePerson @PersonId = @PersonId, @Username = @Username;
+        END TRY
+        BEGIN CATCH
+            DECLARE @err NVARCHAR(4000) = ERROR_MESSAGE();
+            IF OBJECT_ID('Ops.usp_LogAudit','P') IS NOT NULL
+                EXEC Ops.usp_LogAudit @SchemaName='Users', @TableName='Person', @Operation='DELETE_TRIGGER_ERROR', @KeyValue=@PersonId, @Values=@err;
+        END CATCH
+        FETCH NEXT FROM del_cursor INTO @PersonId, @Username;
+    END
+    CLOSE del_cursor; DEALLOCATE del_cursor;
 END;
 GO

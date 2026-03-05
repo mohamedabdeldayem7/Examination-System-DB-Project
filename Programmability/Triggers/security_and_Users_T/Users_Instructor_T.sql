@@ -32,28 +32,37 @@ BEGIN
 END;
 GO
 
--- DELETE Trigger (Cascading to Person/Account)
-CREATE OR ALTER TRIGGER Users.trg_Instructor_Delete
-ON Users.Instructor 
+-- INSTEAD OF DELETE Trigger: calls stored procedure to handle cascading deletes and soft-deletes
+CREATE OR ALTER TRIGGER Users.trg_Instructor_INSTEAD_OF_DELETE
+ON Users.Instructor
 INSTEAD OF DELETE
 AS
 BEGIN
     SET NOCOUNT ON;
-    DECLARE @InsId INT;
-    DECLARE delete_cursor CURSOR FOR SELECT InstructorID FROM deleted;
 
-    OPEN delete_cursor;
-    FETCH NEXT FROM delete_cursor INTO @InsId;
+    DECLARE @InstructorId INT;
+    DECLARE @Username NVARCHAR(100);
+
+    DECLARE del_cursor CURSOR LOCAL FAST_FORWARD FOR
+    SELECT d.InstructorID, a.Username
+    FROM deleted AS d
+    LEFT JOIN Users.Person AS p ON p.PersonId = d.InstructorID
+    LEFT JOIN Users.Account AS a ON a.AccountId = p.AccountId;
+
+    OPEN del_cursor;
+    FETCH NEXT FROM del_cursor INTO @InstructorId, @Username;
     WHILE @@FETCH_STATUS = 0
     BEGIN
-
-        DECLARE @AccId INT = (SELECT AccountId FROM Users.Person WHERE PersonId = @InsId);
-        
-        EXEC Users.usp_DeleteAccount @TargetAccountId = @AccId;
-
-        EXEC Ops.usp_LogAudit @SchemaName = 'Users', @TableName = 'Instructor', @Operation = 'DELETE', @KeyValue = @InsId, @Values = 'Instructor deleted via cascading Account SP';
-        FETCH NEXT FROM delete_cursor INTO @InsId;
-    END;
-    CLOSE delete_cursor; DEALLOCATE delete_cursor;
+        BEGIN TRY
+            EXEC Users.usp_DeleteInstructor @InstructorId = @InstructorId, @Username = @Username;
+        END TRY
+        BEGIN CATCH
+            DECLARE @err NVARCHAR(4000) = ERROR_MESSAGE();
+            IF OBJECT_ID('Ops.usp_LogAudit','P') IS NOT NULL
+                EXEC Ops.usp_LogAudit @SchemaName='Users', @TableName='Instructor', @Operation='DELETE_TRIGGER_ERROR', @KeyValue=@InstructorId, @Values=@err;
+        END CATCH
+        FETCH NEXT FROM del_cursor INTO @InstructorId, @Username;
+    END
+    CLOSE del_cursor; DEALLOCATE del_cursor;
 END;
 GO

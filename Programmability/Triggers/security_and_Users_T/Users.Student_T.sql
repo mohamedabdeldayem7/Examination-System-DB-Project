@@ -31,25 +31,36 @@ BEGIN
 END;
 GO
 
--- DELETE Trigger (Cascading to Account)
-CREATE OR ALTER TRIGGER Users.trg_Student_Delete
-ON Users.Student INSTEAD OF DELETE
+-- INSTEAD OF DELETE Trigger: calls stored procedure to handle cascading deletes and soft-deletes
+CREATE OR ALTER TRIGGER Users.trg_Student_INSTEAD_OF_DELETE
+ON Users.Student
+INSTEAD OF DELETE
 AS
 BEGIN
     SET NOCOUNT ON;
-    DECLARE @StdId INT;
-    DECLARE delete_cursor CURSOR FOR SELECT StudentID FROM deleted;
 
-    OPEN delete_cursor;
-    FETCH NEXT FROM delete_cursor INTO @StdId;
+    DECLARE @StudentId INT;
+    DECLARE @Username NVARCHAR(100);
+
+    DECLARE del_cursor CURSOR LOCAL FAST_FORWARD FOR
+    SELECT d.StudentID, a.Username
+    FROM deleted AS d
+    LEFT JOIN Users.Person AS p ON p.PersonId = d.StudentID
+    LEFT JOIN Users.Account AS a ON a.AccountId = p.AccountId;
+
+    OPEN del_cursor;
+    FETCH NEXT FROM del_cursor INTO @StudentId, @Username;
     WHILE @@FETCH_STATUS = 0
     BEGIN
-        DECLARE @AccId INT = (SELECT AccountId FROM Users.Person WHERE PersonId = @StdId);
-        EXEC Users.usp_DeleteAccount @TargetAccountId = @AccId;
-
-        EXEC Ops.usp_LogAudit @SchemaName = 'Users', @TableName = 'Student', @Operation = 'DELETE', @KeyValue = @StdId, @Values = 'Student deleted via cascading Account SP';
-        FETCH NEXT FROM delete_cursor INTO @StdId;
-    END;
-    CLOSE delete_cursor; DEALLOCATE delete_cursor;
+        BEGIN TRY
+            EXEC Users.usp_DeleteStudent @StudentId = @StudentId, @Username = @Username;
+        END TRY
+        BEGIN CATCH
+            DECLARE @err NVARCHAR(4000) = ERROR_MESSAGE();
+            IF OBJECT_ID('Ops.usp_LogAudit','P') IS NOT NULL
+                EXEC Ops.usp_LogAudit @SchemaName='Users', @TableName='Student', @Operation='DELETE_TRIGGER_ERROR', @KeyValue=@StudentId, @Values=@err;
+        END CATCH
+        FETCH NEXT FROM del_cursor INTO @StudentId, @Username;
+    END
+    CLOSE del_cursor; DEALLOCATE del_cursor;
 END;
-GO
