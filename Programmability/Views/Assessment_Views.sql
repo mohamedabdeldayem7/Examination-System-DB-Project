@@ -85,6 +85,7 @@ JOIN Users.Person p               ON ans.StudentID = p.PersonID;
 GO
 
 -- V5 (INSTRUCTOR ONLY)
+-- V5 ( InstructorID = exam owner, not question author)
 CREATE OR ALTER VIEW Assessment.vw_TextAnswersForReview
 AS
 SELECT
@@ -95,13 +96,14 @@ SELECT
     ans.Student_Answer,
     Assessment.fn_TextSimilarity(ans.Student_Answer, q.Best_Accepted_Answer) AS SimilarityScore,
     eq.Question_Degree AS MaxDegree, ans.Earned_Degree,
-    q.InstructorID,
+    e.InstructorID,
     pi.FirstName + ' ' + pi.LastName AS InstructorName
 FROM Assessment.Student_Answer ans
 JOIN Academic.Question_Pool q      ON ans.QuestionID = q.QuestionID
 JOIN Assessment.Exam_Questions eq  ON ans.ExamID = eq.ExamID AND ans.QuestionID = eq.QuestionID
+JOIN Assessment.Exam e             ON ans.ExamID = e.ExamID
 JOIN Users.Person ps               ON ans.StudentID = ps.PersonID
-JOIN Users.Person pi               ON q.InstructorID = pi.PersonID
+JOIN Users.Person pi               ON e.InstructorID = pi.PersonID
 WHERE q.QuestionType = 'Text' AND ans.Is_Correct IS NULL;
 GO
 
