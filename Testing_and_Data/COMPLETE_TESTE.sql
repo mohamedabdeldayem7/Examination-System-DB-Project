@@ -1,10 +1,11 @@
 USE ExamSystemDB;
 GO
 
+select SUSER_NAME()
 ---------------------------------------------------------------------------
-DELETE FROM Assessment.Student_Exam         WHERE StudentID IN (37,38);
 DELETE FROM Assessment.Student_Exam_Result  WHERE StudentID IN (37,38);
-DELETE FROM Ops.AuditLog                    WHERE [Key] BETWEEN 9001 AND 9999;
+DELETE FROM Assessment.Student_Exam         WHERE StudentID IN (37,38);
+--DELETE FROM Ops.AuditLog                    WHERE [Key] BETWEEN 9001 AND 9999;
 DELETE FROM Assessment.Student_Answer       WHERE StudentID IN (37,38,9005);
 DELETE FROM Assessment.Exam_Questions       WHERE ExamID IN (SELECT ExamID FROM Assessment.Exam WHERE CourseID = 9001);
 DELETE FROM Assessment.Exam                 WHERE CourseID = 9001;

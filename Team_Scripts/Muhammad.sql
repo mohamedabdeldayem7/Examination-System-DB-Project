@@ -71,11 +71,15 @@ EXEC Users.usp_CreateAccount
     @PlainPassword = N'Muhammad@123', 
     @Role = N'Admin';
 
+DECLARE @AccountId INT
 EXEC Users.usp_CreateAccount 
-    @Username = N'Muhammad', 
-    @Email = N'muhammad2@email.com', 
+    @Username = N'Muhammad_', 
+    @Email = N'muhammad_2@email.com', 
     @PlainPassword = N'Muhammad@123', 
-    @Role = N'Admin';
+    @Role = N'Admin',
+    @NewAccountId = @AccountId OUTPUT;
+
+SELECT @AccountId AS NewAccountId;
 
     
 EXEC Users.usp_CreateAccount 
@@ -236,4 +240,140 @@ select * from Users.vw_ActiveContactList
 
 delete from Users.Account
 where [Role] = 'Student' and IsActive = 1
+
+
+DECLARE @InstructorID INT = 12
+        DECLARE @InstructorUsername NVARCHAR(100);
+        SELECT A.Username
+        FROM Users.Account A
+            JOIN Users.Person P ON A.AccountId = P.AccountId
+        WHERE P.PersonId = @InstructorID
+          AND A.IsActive = 1;
+
+
+select NEWID(), SUBSTRING(CONVERT(VARCHAR(36), NEWID()), 1, 14) as RandomString
+
+
+
+
+
+
+-- test
+-- usp_RegisterInstructor
+ EXEC Users.usp_RegisterInstructor
+        @Username = 'Mina_',
+        @Email = 'mina_@gamil.com',
+        @PlainPassword = 'Mina@123',
+        @FirstName = 'Mina',
+        @LastName = 'Mina',
+        @SSN = '99999998888866',
+        @Phone = '01277777711',
+        @CreatedBy = NULL,
+        @Salary = 60000.00,
+        @HireDate = NULL,
+        @Office = N'Main Campus',
+        @Is_Manager = 1;
+
+-- test usp_RegisterStudent
+EXEC Users.usp_RegisterStudent
+        @Username = 'student_1',
+        @Email = 'student_1@test.com',
+        @PlainPassword = 'Student@123',
+        @FirstName = 'Student',
+        @LastName = 'Student',
+        @SSN = '44444445555555',
+        @Phone = '01099999922',
+        @CreatedBy = NULL,
+        @TrackID = 9001,
+        @IntakeID = 9001,
+        @BranchID = 9001
+
+
+
+
+
+select * from Users.Account
+
+        -- Admin : 
+        -- username : Muhammad_
+        -- password : Muhammad@123        
+
+        -- Training Manager :
+        -- username : Mina_
+        -- password : Mina@123 
+
+        -- Instructor :
+        -- username : Salma_
+        -- password : Salma@123
+
+        -- Student :
+        -- username : student_1
+        -- password : Student@123 
+
+        select * from Users.Account
+
+
+select p.personID
+from Users.Account A
+    JOIN Users.Person P ON A.AccountId = P.AccountId
+WHERE A.Username = SUSER_NAME()
+
+
+select SUSER_SNAME()
+
+
+DECLARE @currentUserID int, @currentUsername NVARCHAR(100)
+
+select P.PersonId, S.StudentID
+from Users.Student AS S
+JOIN Users.Person AS P
+    ON S.StudentID = P.PersonId
+JOIN Users.Account AS A ON P.AccountId = A.AccountId
+WHERE A.Username = 'student_1' OR S.StudentID = NULL
+
+SELECT @currentUserID AS [Student ID], @currentUsername AS USERNAME  
+ 
+
+  EXEC Users.usp_GetStudent @Username = 'stud_demo01', @StudentId = 55;-- Current user looks up own record
+
+
+select SUSER_NAME()
+
+
+select @@version
+
+
+select [StudentName], [Student_Answer]
+from Assessment.vw_StudentAnswerSheet
+where [StudentID] = 37
+
+select * from Assessment.vw_StudentExamResults  
+where StudentID = 37
+
+
+exec Assessment.sp_SearchExamResults 
+
+
+EXEC Assessment.sp_UpsertAnswer
+    @StudentID = 37, @ExamID = @EID8,
+    @QuestionID = 9001,
+    @Student_Answer = 'Structured Query Language';   
+                
+
+select S.*, A.Username
+from Users.Student S JOIN Users.Person p 
+ON S.StudentID = P.PersonId JOIN Users.Account A
+ON A.AccountId = P.AccountId
+where P.IsDeleted = 0
+
+
+select I.*, A.Username
+from Users.Instructor I JOIN Users.Person p 
+ON I.InstructorID = P.PersonId JOIN Users.Account A
+ON A.AccountId = P.AccountId
+where P.IsDeleted = 0
+
+
+select * from Users.Instructor
+
 
