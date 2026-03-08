@@ -220,6 +220,23 @@ BEGIN
         SET @Username = SUSER_NAME(); -- default to current user if no identifier provided
     END
 
+    DECLARE @currentUserID int, @currentUsername NVARCHAR(100)
+
+    select @currentUserID = S.StudentID, @currentUsername = A.Username
+    from Users.Student AS S
+        JOIN Users.Person AS P ON S.StudentID = P.PersonId
+        JOIN Users.Account AS A ON P.AccountId = A.AccountId
+    WHERE A.Username = SUSER_NAME()
+
+
+    IF IS_ROLEMEMBER('db_Admin') <> 1 AND IS_ROLEMEMBER('db_TrainingManager') <> 1 
+        AND (@Username <> @currentUsername OR @Username IS NULL) 
+        AND (@StudentId <> @currentUserID OR @StudentId IS NULL)
+    BEGIN
+        RAISERROR('Permission denied. Admin or TrainingManager required.',16,1);
+        RETURN;
+    END;
+
     SELECT 
         S.StudentID,
         P.SSN,

@@ -243,10 +243,29 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    
     IF @InstructorId IS NULL AND @Username IS NULL
     BEGIN
         SET @Username = SUSER_NAME(); -- default to current user if no identifier provided
     END
+
+    DECLARE @currentUserID int, @currentUsername NVARCHAR(100)
+
+    select @currentUserID = I.InstructorID, @currentUsername = A.Username
+    from Users.Instructor AS I
+        JOIN Users.Person AS P ON I.InstructorID = P.PersonId
+        JOIN Users.Account AS A ON P.AccountId = A.AccountId
+    WHERE A.Username = SUSER_NAME()
+
+
+    IF IS_ROLEMEMBER('db_Admin') <> 1 AND IS_ROLEMEMBER('db_TrainingManager') <> 1 
+        AND (@Username <> @currentUsername OR @Username IS NULL) 
+        AND (@InstructorId <> @currentUserID OR @InstructorId IS NULL)
+    BEGIN
+        RAISERROR('Permission denied. Admin or TrainingManager required.',16,1);
+        RETURN;
+    END;
+
 
     SELECT 
         I.InstructorID,
