@@ -1,8 +1,8 @@
-USE [ExamSystemDB];
-GO 
+
 -- Academic Stored Procedure
 --STORED PROCEDURE FOR MAMAGER TO ADD COURSE
 CREATE OR ALTER PROC Academic.sp_AddCourse
+@CourseID INT ,
 @CourseName VARCHAR(100) ,
 @Description VARCHAR(500) =NULL ,
 @Max_Degree DECIMAL (5,2) ,
@@ -12,7 +12,9 @@ BEGIN
     SET NOCOUNT ON;
 
     BEGIN TRY
-     -- VALIDATION FOR MANAGER 
+     -- VALIDATION FOR MANAGER
+    IF @CourseID IS NULL
+            THROW 51000, 'CourseID is Required',1;
     IF @CourseName IS NULL OR @Max_Degree IS NULL OR @Min_Degree IS NULL
             THROW 51000, 'Required fields are missing.', 1;
     IF @Min_Degree >= @Max_Degree
@@ -24,9 +26,9 @@ BEGIN
         )
             THROW 51002, 'Course already exists.', 1;
       INSERT INTO Academic.Course
-        (CourseName, Description, Max_Degree, Min_Degree, IsDeleted)
+        ([CourseID],CourseName, Description, Max_Degree, Min_Degree, IsDeleted)
         VALUES
-        (@CourseName, @Description, @Max_Degree, @Min_Degree, 0);
+        (@CourseID,@CourseName, @Description, @Max_Degree, @Min_Degree, 0);
 
 
     END TRY
@@ -34,7 +36,7 @@ BEGIN
         THROW
     END CATCH
 END
-GO
+GO  
 --STORED PROCEDURE FOR MAMAGER TO UPDATE COURSE
 CREATE OR ALTER PROC Academic.sp_UpdateCourse
 @CourseID INT ,
